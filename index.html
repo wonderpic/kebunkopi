@@ -7,9 +7,8 @@
 <style>
   :root {
     --green-50:#f0faf0;--green-100:#d6f0d6;
-    --green-500:#388e3c;--green-600:#2e7d32;
-    --green-700:#1b5e20;--green-800:#145214;
-    --amber-300:#ffd54f;
+    --green-500:#388e3c;--green-600:#2e7d32;--green-700:#1b5e20;
+    --amber-300:#ffd54f;--amber-500:#e8a020;
     --text-dark:#1a2e1a;--text-mid:#3a5a3a;--text-muted:#6a8a6a;
     --warning-bg:#fff3e0;--warning-border:#e65100;--warning-text:#bf360c;
     --card-bg:rgba(255,255,255,0.90);--card-border:rgba(46,125,50,0.18);
@@ -25,29 +24,30 @@
 
   /* HEADER */
   .app-header{
-    background:linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0.08) 100%);
-    padding:40px 24px 28px;text-align:center;
+    background:linear-gradient(180deg,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.12) 100%);
+    padding:36px 24px 26px;text-align:center;
   }
   .logo-wrap{
-    width:72px;height:72px;background:rgba(255,255,255,0.15);
-    border:2px solid rgba(255,255,255,0.35);border-radius:50%;
+    width:96px;height:96px;
+    border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    margin:0 auto 14px;font-size:32px;
+    margin:0 auto 14px;
+    overflow:hidden;
+    background:#000;
+    border:2.5px solid rgba(255,255,255,0.25);
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);
   }
-  .app-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:0.3px;line-height:1.2;}
+  .logo-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .app-title{font-size:21px;font-weight:700;color:#fff;letter-spacing:0.3px;line-height:1.25;}
   .app-title span{color:var(--amber-300);}
-  .app-subtitle{font-size:11px;color:rgba(255,255,255,0.72);margin-top:5px;letter-spacing:0.8px;text-transform:uppercase;}
+  .app-subtitle{font-size:10.5px;color:rgba(255,255,255,0.68);margin-top:5px;letter-spacing:1px;text-transform:uppercase;}
 
   /* NAV */
-  .nav-bar{
-    background:rgba(255,255,255,0.97);display:flex;
-    border-bottom:1px solid rgba(46,125,50,0.12);position:sticky;top:0;z-index:100;
-  }
+  .nav-bar{background:rgba(255,255,255,0.97);display:flex;border-bottom:1px solid rgba(46,125,50,0.12);position:sticky;top:0;z-index:100;}
   .nav-btn{
     flex:1;padding:13px 4px 11px;background:none;border:none;cursor:pointer;
     font-family:inherit;font-size:10.5px;font-weight:500;color:var(--text-muted);
-    display:flex;flex-direction:column;align-items:center;gap:4px;
-    border-bottom:3px solid transparent;transition:all 0.2s;
+    display:flex;flex-direction:column;align-items:center;gap:4px;border-bottom:3px solid transparent;transition:all 0.2s;
   }
   .nav-btn .icon{font-size:20px;line-height:1;}
   .nav-btn.active{color:var(--green-600);border-bottom-color:var(--green-500);font-weight:700;}
@@ -55,12 +55,8 @@
 
   /* CONTENT */
   .content{flex:1;padding:16px 13px 80px;}
-  .tab-panel{display:none;} .tab-panel.active{display:block;}
-
-  .section-title{
-    font-size:17px;font-weight:700;color:#fff;margin-bottom:13px;
-    text-shadow:0 1px 4px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;
-  }
+  .tab-panel{display:none;}.tab-panel.active{display:block;}
+  .section-title{font-size:17px;font-weight:700;color:#fff;margin-bottom:13px;text-shadow:0 1px 4px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;}
   .section-title::before{content:'';width:4px;height:20px;background:var(--amber-300);border-radius:2px;display:inline-block;}
 
   /* STATS */
@@ -69,89 +65,73 @@
   .stat-num{font-size:20px;font-weight:700;color:#fff;line-height:1;}
   .stat-lbl{font-size:9.5px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.3px;margin-top:3px;}
 
+  /* ZONA BADGE */
+  .zona-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;}
+  .zona-rendah{background:#fff3e0;color:#e65100;}
+  .zona-menengah{background:#e8f5e9;color:#1b5e20;}
+  .zona-tinggi{background:#e3f2fd;color:#1565c0;}
+
   /* CARD */
   .card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:15px;margin-bottom:12px;box-shadow:var(--shadow);}
   .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
   .card-title{font-size:14.5px;font-weight:700;color:var(--text-dark);}
   .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:0.3px;text-transform:uppercase;display:inline-block;}
-  .badge-arabika{background:#e8f5e9;color:#1b5e20;} .badge-robusta{background:#fbe9e7;color:#bf360c;}
-  .badge-organik{background:#f1f8e9;color:#33691e;} .badge-kimia{background:#e3f2fd;color:#1565c0;}
-  .badge-kemarau{background:#fff3e0;color:#e65100;} .badge-hujan{background:#e8eaf6;color:#283593;}
+  .badge-arabika{background:#e8f5e9;color:#1b5e20;}.badge-robusta{background:#fbe9e7;color:#bf360c;}
+  .badge-organik{background:#f1f8e9;color:#33691e;}.badge-kimia{background:#e3f2fd;color:#1565c0;}
+  .badge-kemarau{background:#fff3e0;color:#e65100;}.badge-hujan{background:#e8eaf6;color:#283593;}
   .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .info-row{display:flex;flex-direction:column;gap:2px;}
   .info-label{color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;}
   .info-val{color:var(--text-dark);font-weight:500;font-size:13px;}
-  .alert{
-    background:var(--warning-bg);border:1px solid var(--warning-border);
-    border-left:4px solid var(--warning-border);border-radius:var(--radius-sm);
-    padding:9px 11px;font-size:12px;color:var(--warning-text);margin-top:10px;line-height:1.5;
-  }
+  .alert{background:var(--warning-bg);border:1px solid var(--warning-border);border-left:4px solid var(--warning-border);border-radius:var(--radius-sm);padding:9px 11px;font-size:12px;color:var(--warning-text);margin-top:10px;line-height:1.55;}
+  .alert-info{background:#e3f2fd;border:1px solid #1565c0;border-left:4px solid #1565c0;border-radius:var(--radius-sm);padding:9px 11px;font-size:12px;color:#1565c0;margin-top:8px;line-height:1.55;}
   .delete-btn{background:none;border:1px solid rgba(198,40,40,0.3);color:#c62828;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;}
   .delete-btn:hover{background:#ffebee;}
 
   /* SCHEDULE */
   .sched-filter{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;}
-  .filter-chip{
-    background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);
-    color:rgba(255,255,255,0.85);border-radius:20px;padding:5px 12px;
-    font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;
-  }
+  .filter-chip{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.85);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
   .filter-chip.active{background:rgba(255,255,255,0.92);color:var(--green-700);font-weight:700;}
-  .schedule-item{
-    background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-sm);
-    padding:12px 13px;margin-bottom:9px;box-shadow:0 2px 10px rgba(27,94,32,0.07);
-    display:flex;align-items:center;gap:11px;position:relative;overflow:hidden;
-  }
+  .schedule-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:12px 13px;margin-bottom:9px;box-shadow:0 2px 10px rgba(27,94,32,0.07);display:flex;align-items:center;gap:11px;position:relative;overflow:hidden;}
   .schedule-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
-  .type-pupuk::before{background:#558b2f;} .type-pangkas::before{background:#00838f;}
-  .type-panen::before{background:#e65100;} .type-siram::before{background:#1565c0;}
-  .type-drainase::before{background:#6a1b9a;} .type-gulma::before{background:#4e342e;}
+  .type-pupuk::before{background:#558b2f;}.type-pangkas::before{background:#00838f;}
+  .type-panen::before{background:#e65100;}.type-siram::before{background:#1565c0;}
+  .type-drainase::before{background:#6a1b9a;}.type-gulma::before{background:#4e342e;}
   .type-wiwilan::before{background:#00695c;}
   .sched-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-  .type-pupuk .sched-icon{background:#f1f8e9;} .type-pangkas .sched-icon{background:#e0f7fa;}
-  .type-panen .sched-icon{background:#fff3e0;} .type-siram .sched-icon{background:#e3f2fd;}
-  .type-drainase .sched-icon{background:#f3e5f5;} .type-gulma .sched-icon{background:#efebe9;}
+  .type-pupuk .sched-icon{background:#f1f8e9;}.type-pangkas .sched-icon{background:#e0f7fa;}
+  .type-panen .sched-icon{background:#fff3e0;}.type-siram .sched-icon{background:#e3f2fd;}
+  .type-drainase .sched-icon{background:#f3e5f5;}.type-gulma .sched-icon{background:#efebe9;}
   .type-wiwilan .sched-icon{background:#e0f2f1;}
   .sched-body{flex:1;min-width:0;}
   .sched-task{font-size:13px;font-weight:600;color:var(--text-dark);margin-bottom:2px;}
   .sched-block{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sched-zona{font-size:10px;color:#1565c0;margin-top:1px;}
   .sched-date{text-align:right;flex-shrink:0;}
   .sched-date-main{font-size:12.5px;font-weight:600;color:var(--green-600);}
   .sched-date-rel{font-size:10px;color:var(--text-muted);margin-top:2px;}
   .overdue{color:#c62828 !important;}
 
   /* SOURCE NOTE */
-  .source-note{
-    background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);
-    border-radius:10px;padding:10px 13px;margin-bottom:13px;
-    font-size:11px;color:rgba(255,255,255,0.78);line-height:1.6;
-  }
+  .source-note{background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);border-radius:10px;padding:10px 13px;margin-bottom:13px;font-size:11px;color:rgba(255,255,255,0.78);line-height:1.6;}
   .source-note strong{color:rgba(255,255,255,0.95);}
+
+  /* ZONA INFO */
+  .zona-info-bar{background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);border-radius:10px;padding:10px 13px;margin-bottom:13px;font-size:11px;color:rgba(255,255,255,0.82);line-height:1.7;}
+  .zona-info-bar strong{color:#fff;}
 
   /* FORM */
   .form-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px 15px;box-shadow:var(--shadow);}
   .form-group{margin-bottom:14px;}
   .form-label{display:block;font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
-  .form-input{
-    width:100%;padding:11px 12px;border:1.5px solid rgba(46,125,50,0.22);
-    border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text-dark);
-    background:#fff;outline:none;transition:border-color 0.15s;
-  }
+  .form-input{width:100%;padding:11px 12px;border:1.5px solid rgba(46,125,50,0.22);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text-dark);background:#fff;outline:none;transition:border-color 0.15s;}
   .form-input:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(56,142,60,0.12);}
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .toggle-group{display:flex;gap:8px;}
-  .toggle-opt{
-    flex:1;padding:10px 5px;border:1.5px solid rgba(46,125,50,0.22);
-    border-radius:var(--radius-sm);text-align:center;font-size:12.5px;font-weight:500;
-    color:var(--text-mid);cursor:pointer;background:#fff;transition:all 0.15s;user-select:none;
-  }
+  .toggle-opt{flex:1;padding:10px 5px;border:1.5px solid rgba(46,125,50,0.22);border-radius:var(--radius-sm);text-align:center;font-size:12.5px;font-weight:500;color:var(--text-mid);cursor:pointer;background:#fff;transition:all 0.15s;user-select:none;}
   .toggle-opt.selected{border-color:var(--green-600);background:var(--green-50);color:var(--green-700);font-weight:700;}
-  .submit-btn{
-    width:100%;padding:14px;background:linear-gradient(135deg,#2e7d32,#388e3c);
-    color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;
-    font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;
-    display:flex;align-items:center;justify-content:center;gap:8px;
-  }
+  .mdpl-preview{margin-top:8px;padding:8px 11px;border-radius:8px;font-size:11.5px;font-weight:600;display:none;}
+  .submit-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2e7d32,#388e3c);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
   .submit-btn:active{transform:scale(0.98);}
 
   /* EMPTY */
@@ -160,50 +140,42 @@
   .empty-state p{font-size:14px;line-height:1.7;}
 
   /* TOAST */
-  .toast{
-    position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);
-    background:#1b5e20;color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;
-    font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;
-    transition:all 0.3s ease;z-index:999;white-space:nowrap;pointer-events:none;
-  }
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:#1b5e20;color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;transition:all 0.3s ease;z-index:999;white-space:nowrap;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 <div class="app-shell">
-
   <div class="app-header">
-    <div class="logo-wrap">☕</div>
+    <div class="logo-wrap">
+      <img src="data:image/png;base64,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" alt="Talaga Hangsa Logo">
+    </div>
     <div class="app-title">Talaga Hangsa <span>KopiPlanPro</span></div>
     <div class="app-subtitle">Asisten Digital Perawatan Kebun Kopi</div>
   </div>
 
   <nav class="nav-bar">
-    <button class="nav-btn active" data-tab="kebun" onclick="switchTab('kebun')">
-      <span class="icon">🏡</span>Data Kebun
-    </button>
-    <button class="nav-btn" data-tab="jadwal" onclick="switchTab('jadwal')">
-      <span class="icon">📅</span>Jadwal Kerja
-    </button>
-    <button class="nav-btn" data-tab="tambah" onclick="switchTab('tambah')">
-      <span class="icon">➕</span>Tambah Blok
-    </button>
+    <button class="nav-btn active" data-tab="kebun" onclick="switchTab('kebun')"><span class="icon">🏡</span>Data Kebun</button>
+    <button class="nav-btn" data-tab="jadwal" onclick="switchTab('jadwal')"><span class="icon">📅</span>Jadwal Kerja</button>
+    <button class="nav-btn" data-tab="tambah" onclick="switchTab('tambah')"><span class="icon">➕</span>Tambah Blok</button>
   </nav>
 
   <div class="content">
-
-    <!-- TAB: DATA KEBUN -->
+    <!-- DATA KEBUN -->
     <div id="tab-kebun" class="tab-panel active">
       <div class="stats-bar" id="statsBar"></div>
       <div class="section-title">Blok Kebun Aktif</div>
       <div id="kebunList"></div>
     </div>
 
-    <!-- TAB: JADWAL KERJA -->
+    <!-- JADWAL KERJA -->
     <div id="tab-jadwal" class="tab-panel">
       <div class="section-title">Jadwal Kerja Terdekat</div>
-      <div class="source-note">
-        <strong>📚 Basis data ilmiah:</strong> Puslitkoka, BBPP Lembang Kementan, GAP Kopi Kementan RI, cybex.pertanian.go.id, repository.pertanian.go.id
+      <div class="source-note"><strong>📚 Basis data ilmiah:</strong> Puslitkoka, BBPP Lembang Kementan, GAP Kopi Kementan RI, cybex.pertanian.go.id — jadwal disesuaikan per zona ketinggian lahan.</div>
+      <div class="zona-info-bar">
+        🏔️ <strong>Zona Rendah</strong> &lt; 700 mdpl &nbsp;|&nbsp;
+        🌿 <strong>Zona Menengah</strong> 700–1.200 mdpl &nbsp;|&nbsp;
+        ❄️ <strong>Zona Tinggi</strong> &gt; 1.200 mdpl
       </div>
       <div class="sched-filter">
         <button class="filter-chip active" onclick="filterSchedule('semua',this)">Semua</button>
@@ -216,7 +188,7 @@
       <div id="jadwalList"></div>
     </div>
 
-    <!-- TAB: TAMBAH BLOK -->
+    <!-- TAMBAH BLOK -->
     <div id="tab-tambah" class="tab-panel">
       <div class="section-title">Tambah Blok Baru</div>
       <div class="form-card">
@@ -231,7 +203,8 @@
           </div>
           <div class="form-group">
             <label class="form-label">Ketinggian (mdpl)</label>
-            <input class="form-input" id="f_mdpl" type="number" placeholder="1200" min="0" max="3000">
+            <input class="form-input" id="f_mdpl" type="number" placeholder="1200" min="0" max="3000" oninput="previewZona(this.value)">
+            <div class="mdpl-preview" id="zonaPreview"></div>
           </div>
         </div>
         <div class="form-group">
@@ -268,32 +241,84 @@
         <button class="submit-btn" onclick="tambahBlok()">➕ Simpan Blok</button>
       </div>
     </div>
-
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'kopiplanpro_v3';
+const STORAGE_KEY = 'kopiplanpro_v4';
 let bloks = [];
-try { bloks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { bloks = []; }
+try { bloks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { bloks=[]; }
 let currentFilter = 'semua';
 const formState = { varietas:'Arabika', pupuk:'Organik', cuaca:'Kemarau' };
+
+/* ── ZONA KETINGGIAN ──────────────────────────────────────────
+ * Sumber: Puslitkoka (2010), BBPP Lembang, Kementan GAP Kopi,
+ *         cybex.pertanian.go.id, repository.pertanian.go.id
+ *
+ * RENDAH  < 700 mdpl
+ *   - Pupuk: interval lebih pendek (150 hari) karena metabolisme
+ *     lebih cepat di suhu tinggi (Puslitkoka, 2010)
+ *   - Penyiraman: lebih sering (tiap 2 hari) karena evapotranspirasi
+ *     tinggi (BBPP Lembang)
+ *   - Panen Arabika: lebih cepat ~900 hari (buah matang cepat di
+ *     suhu tinggi, tapi kualitas lebih rendah)
+ *   - Panen Robusta: 750 hari (lebih cepat di zona panas)
+ *
+ * MENENGAH 700–1.200 mdpl (zona optimal kedua varietas)
+ *   - Pupuk: interval standar 180 hari (Puslitkoka)
+ *   - Penyiraman: tiap 3 hari (Kepmentan No.27/2021)
+ *   - Panen Arabika: 1095 hari (3 tahun) — standar Puslitkoka
+ *   - Panen Robusta: 900 hari (2,5 tahun) — standar Puslitkoka
+ *
+ * TINGGI > 1.200 mdpl
+ *   - Pupuk: interval lebih panjang (210 hari) karena metabolisme
+ *     lambat di suhu dingin (Puslitkoka, cybex.pertanian.go.id)
+ *   - Penyiraman: tiap 4–5 hari karena kelembaban lebih tinggi
+ *     (BBPP Lembang)
+ *   - Panen Arabika: 1460 hari (4 tahun) karena proses pemasakan
+ *     buah lebih lambat di ketinggian > 1.200 mdpl (Puslitkoka 2010)
+ *   - Panen Robusta: jarang ditanam > 1.200 mdpl, tapi jika ada
+ *     1095 hari (3 tahun)
+ ────────────────────────────────────────────────────────────── */
+
+function getZona(mdpl) {
+  const m = parseInt(mdpl);
+  if (m < 700) return 'rendah';
+  if (m <= 1200) return 'menengah';
+  return 'tinggi';
+}
+
+function getZonaLabel(zona) {
+  if (zona === 'rendah')   return { icon:'🏔️', label:'Zona Rendah < 700 mdpl',      cls:'zona-rendah' };
+  if (zona === 'menengah') return { icon:'🌿', label:'Zona Menengah 700–1.200 mdpl', cls:'zona-menengah' };
+  return                          { icon:'❄️', label:'Zona Tinggi > 1.200 mdpl',     cls:'zona-tinggi' };
+}
+
+function previewZona(val) {
+  const el = document.getElementById('zonaPreview');
+  if (!val) { el.style.display='none'; return; }
+  const zona = getZona(val);
+  const z = getZonaLabel(zona);
+  el.style.display = 'block';
+  el.className = 'mdpl-preview ' + z.cls;
+  el.textContent = z.icon + ' ' + z.label;
+}
 
 function selectToggle(el) {
   const field = el.dataset.field, val = el.dataset.val;
   formState[field] = val;
-  document.querySelectorAll(`.toggle-opt[data-field="${field}"]`).forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('.toggle-opt[data-field="'+field+'"]').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
 }
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  if (tab === 'kebun') renderKebun();
-  if (tab === 'jadwal') renderJadwal();
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+  if (tab==='kebun') renderKebun();
+  if (tab==='jadwal') renderJadwal();
 }
 
 function showToast(msg) {
@@ -309,112 +334,168 @@ function addDays(dateStr, days) {
   return d;
 }
 function formatDate(d) {
-  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+  return d.toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'});
 }
 function relativeDay(d) {
   const today = new Date(); today.setHours(0,0,0,0);
   const diff = Math.round((d - today) / 86400000);
-  if (diff < 0) return Math.abs(diff) + ' hari lalu';
+  if (diff < 0) return Math.abs(diff)+' hari lalu';
   if (diff === 0) return 'Hari ini!';
   if (diff === 1) return 'Besok';
-  return diff + ' hari lagi';
+  return diff+' hari lagi';
 }
 
 function generateTasks(blok) {
   const tasks = [];
-  const add = (label, daysArr, type, icon) => {
+  const zona = getZona(blok.mdpl);
+
+  const add = (label, daysArr, type, icon, zonaNote) => {
     daysArr.forEach(d => tasks.push({
       blokId:blok.id, blokNama:blok.nama, lokasi:blok.lokasi,
-      task:label, targetDate:addDays(blok.tanggal, d), type, icon
+      task:label, targetDate:addDays(blok.tanggal, d),
+      type, icon, zona, zonaNote: zonaNote||''
     }));
   };
 
-  // PEMUPUKAN — 2x setahun (~180 hari), mulai hari ke-60
-  // Sumber: Puslitkoka, BBPP Lembang, GAP Kementan
-  const labelPupuk = blok.pupuk === 'Organik'
+  /* ── PEMUPUKAN ──────────────────────────────────────────────
+   * Interval disesuaikan zona (Puslitkoka 2010, BBPP Lembang):
+   *   Rendah   → 150 hari (metabolisme cepat, suhu tinggi)
+   *   Menengah → 180 hari (standar GAP Kementan)
+   *   Tinggi   → 210 hari (metabolisme lambat, suhu dingin)
+   ─────────────────────────────────────────────────────────── */
+  const intervalPupuk = zona==='rendah' ? 150 : zona==='menengah' ? 180 : 210;
+  const labelPupuk = blok.pupuk==='Organik'
     ? 'Pemupukan Organik (10–20 kg/pohon)'
     : 'Pemupukan Anorganik (Urea+SP36+KCl)';
+  const zonaNotePupuk = zona==='rendah'
+    ? 'Interval 150 hr — zona rendah (metabolisme cepat)'
+    : zona==='menengah'
+    ? 'Interval 180 hr — zona menengah (standar)'
+    : 'Interval 210 hr — zona tinggi (metabolisme lambat)';
   const daysPupuk = [];
-  for (let d = 60; d <= 1825; d += 180) daysPupuk.push(d);
-  add(labelPupuk, daysPupuk, 'pupuk', blok.pupuk === 'Organik' ? '🍃' : '⚗️');
+  for (let d = 60; d <= 1825; d += intervalPupuk) daysPupuk.push(d);
+  add(labelPupuk, daysPupuk, 'pupuk', blok.pupuk==='Organik'?'🍃':'⚗️', zonaNotePupuk);
 
-  // VARIETAS
+  /* ── VARIETAS ────────────────────────────────────────────── */
   if (blok.varietas === 'Arabika') {
-    // Pangkas pembentukan: umur 1–2 tahun | Sumber: BBPP Lembang, cybex.pertanian.go.id
-    add('Pangkas Pembentukan Arabika', [365, 540], 'pangkas', '✂️');
-    // Pangkas produksi: tiap tahun setelah panen | Sumber: Puslitkoka 2010
-    add('Pangkas Produksi/Lewat Panen', [1460, 1825], 'pangkas', '✂️');
-    // Panen: umur 3 tahun | Sumber: Puslitkoka, repository.pertanian.go.id
-    add('Panen Perdana Arabika', [1095], 'panen', '☕');
-    add('Panen Arabika Tahun ke-4', [1460], 'panen', '☕');
+    // Pangkas pembentukan: semua zona sama (umur 1–2 tahun)
+    add('Pangkas Pembentukan Arabika', [365,540], 'pangkas', '✂️', 'Umur 1–2 tahun (Puslitkoka)');
+    // Pangkas produksi setelah panen
+    const hariPanenArabika = zona==='rendah' ? 900 : zona==='menengah' ? 1095 : 1460;
+    add('Pangkas Produksi/Lewas Panen', [hariPanenArabika+365, hariPanenArabika+730], 'pangkas', '✂️', 'Setelah panen pertama');
+
+    /* Panen Arabika per zona (Puslitkoka 2010):
+     *   Rendah   → 900 hr  (buah cepat matang, kualitas rendah)
+     *   Menengah → 1095 hr (standar 3 tahun)
+     *   Tinggi   → 1460 hr (pemasakan lambat, kualitas premium) */
+    const zonaNotePanenA = zona==='rendah'
+      ? 'Panen ~2,5 thn — zona rendah (matang cepat)'
+      : zona==='menengah'
+      ? 'Panen ~3 thn — zona menengah (standar Puslitkoka)'
+      : 'Panen ~4 thn — zona tinggi (pemasakan lambat, kualitas premium)';
+    add('Panen Perdana Arabika', [hariPanenArabika], 'panen', '☕', zonaNotePanenA);
+    add('Panen Arabika Berikutnya', [hariPanenArabika+365], 'panen', '☕', zonaNotePanenA);
   } else {
-    // Wiwilan perdana: bulan ke-6 | Sumber: Dinas Pertanian Buleleng
-    add('Wiwilan Perdana Robusta', [180], 'wiwilan', '🌿');
-    add('Wiwilan Robusta Tahunan', [545, 910], 'wiwilan', '🌿');
-    // Panen: umur 2,5 tahun | Sumber: Puslitkoka, alamtani.com, cybex.pertanian.go.id
-    add('Panen Perdana Robusta', [900], 'panen', '☕');
-    add('Panen Robusta Tahun ke-4', [1265], 'panen', '☕');
+    // Wiwilan: semua zona bulan ke-6
+    add('Wiwilan Perdana Robusta', [180], 'wiwilan', '🌿', 'Bulan ke-6 (Dinas Pertanian)');
+    add('Wiwilan Robusta Tahunan', [545,910], 'wiwilan', '🌿', 'Tahunan pasca panen');
+
+    /* Panen Robusta per zona (Puslitkoka, cybex.pertanian.go.id):
+     *   Rendah   → 750 hr  (~2 thn, lebih cepat di zona panas)
+     *   Menengah → 900 hr  (standar 2,5 thn)
+     *   Tinggi   → 1095 hr (melambat > 900 mdpl) */
+    const hariPanenRobusta = zona==='rendah' ? 750 : zona==='menengah' ? 900 : 1095;
+    const zonaNotePanenR = zona==='rendah'
+      ? 'Panen ~2 thn — zona rendah (lebih cepat)'
+      : zona==='menengah'
+      ? 'Panen ~2,5 thn — zona menengah (standar)'
+      : 'Panen ~3 thn — zona tinggi (melambat di atas 900 mdpl)';
+    add('Panen Perdana Robusta', [hariPanenRobusta], 'panen', '☕', zonaNotePanenR);
+    add('Panen Robusta Berikutnya', [hariPanenRobusta+365], 'panen', '☕', zonaNotePanenR);
   }
 
-  // CUACA
+  /* ── CUACA ────────────────────────────────────────────────
+   * Penyiraman disesuaikan zona (BBPP Lembang, Kepmentan No.27/2021):
+   *   Rendah   → tiap 2 hari (evapotranspirasi tinggi)
+   *   Menengah → tiap 3 hari (standar)
+   *   Tinggi   → tiap 5 hari (lebih lembab)
+   ────────────────────────────────────────────────────────── */
   if (blok.cuaca === 'Kemarau') {
-    // Siram tiap 3 hari | Sumber: Puslitkoka, Kepmentan No.27/2021
-    add('Penyiraman Rutin', [3,6,9,12,15,18,21,24,27,30], 'siram', '💧');
+    const intervalSiram = zona==='rendah' ? 2 : zona==='menengah' ? 3 : 5;
+    const zonaNoteSiram = zona==='rendah'
+      ? 'Tiap 2 hr — zona rendah (evapotranspirasi tinggi)'
+      : zona==='menengah'
+      ? 'Tiap 3 hr — zona menengah (Kepmentan No.27/2021)'
+      : 'Tiap 5 hr — zona tinggi (kelembaban tinggi)';
+    const daysSiram = [];
+    for (let d = intervalSiram; d <= 30; d += intervalSiram) daysSiram.push(d);
+    add('Penyiraman Rutin', daysSiram, 'siram', '💧', zonaNoteSiram);
   } else {
-    // Drainase tiap 7 hari | Sumber: GAP Kementan
-    add('Periksa Saluran Drainase', [7,14,21,28], 'drainase', '🌊');
+    add('Periksa Saluran Drainase', [7,14,21,28], 'drainase', '🌊', 'Tiap 7 hr musim hujan (GAP Kementan)');
   }
-  // Gulma tiap 14 hari (semua kondisi) | Sumber: agribisnis.uma.ac.id, Puslitkoka
-  add('Penyiangan Gulma', [14,28,42,56,70,84], 'gulma', '🌾');
+  // Gulma tiap 14 hari semua zona & cuaca (Puslitkoka, agribisnis.uma.ac.id)
+  add('Penyiangan Gulma', [14,28,42,56,70,84], 'gulma', '🌾', 'Tiap 14 hr (Puslitkoka)');
 
   return tasks;
 }
 
 function getAlerts(blok) {
   const alerts = [], mdpl = parseInt(blok.mdpl);
-  if (blok.varietas === 'Arabika' && mdpl < 1000)
-    alerts.push('⚠️ Arabika < 1.000 mdpl: risiko karat daun (Hemileia vastatrix). Gunakan varietas tahan karat atau fungisida preventif. (Puslitkoka 2010)');
-  if (blok.varietas === 'Robusta' && mdpl > 900)
-    alerts.push('⚠️ Robusta > 900 mdpl: di luar zona optimal (400–900 mdpl). Berisiko pembungaan lambat & produksi tidak maksimal. (BBPP Lembang, Kementan)');
+  const zona = getZona(mdpl);
+  const z = getZonaLabel(zona);
+
+  // Smart alert geografi
+  if (blok.varietas==='Arabika' && mdpl < 1000)
+    alerts.push({type:'warn', msg:'⚠️ Arabika < 1.000 mdpl: risiko tinggi karat daun (Hemileia vastatrix). Gunakan varietas tahan karat atau fungisida preventif. (Puslitkoka 2010)'});
+  if (blok.varietas==='Robusta' && mdpl > 900)
+    alerts.push({type:'warn', msg:'⚠️ Robusta > 900 mdpl: di luar zona optimal. Berisiko pembungaan lambat & produksi tidak maksimal. (BBPP Lembang, Kementan)'});
+
+  // Info zona
+  const panenInfo = blok.varietas==='Arabika'
+    ? (zona==='rendah' ? '~2,5 tahun' : zona==='menengah' ? '~3 tahun' : '~4 tahun')
+    : (zona==='rendah' ? '~2 tahun' : zona==='menengah' ? '~2,5 tahun' : '~3 tahun');
+  const pupukInfo = zona==='rendah' ? '150 hari' : zona==='menengah' ? '180 hari' : '210 hari';
+  const siramInfo = zona==='rendah' ? 'tiap 2 hari' : zona==='menengah' ? 'tiap 3 hari' : 'tiap 5 hari';
+  alerts.push({type:'info', msg: z.icon+' '+z.label+': Pupuk interval '+pupukInfo+' | Panen perdana '+panenInfo+(blok.cuaca==='Kemarau'?' | Siram '+siramInfo:'')});
+
   return alerts;
 }
 
 function renderKebun() {
   const total = bloks.length;
-  const arabika = bloks.filter(b => b.varietas==='Arabika').length;
-  const robusta = bloks.filter(b => b.varietas==='Robusta').length;
-  const pohon = bloks.reduce((s,b) => s + parseInt(b.pohon||0), 0);
-
+  const arabika = bloks.filter(b=>b.varietas==='Arabika').length;
+  const robusta = bloks.filter(b=>b.varietas==='Robusta').length;
+  const pohon = bloks.reduce((s,b)=>s+parseInt(b.pohon||0),0);
   document.getElementById('statsBar').innerHTML =
-    `<div class="stat-chip"><div class="stat-num">${total}</div><div class="stat-lbl">Blok</div></div>
-     <div class="stat-chip"><div class="stat-num">${arabika}</div><div class="stat-lbl">Arabika</div></div>
-     <div class="stat-chip"><div class="stat-num">${robusta}</div><div class="stat-lbl">Robusta</div></div>
-     <div class="stat-chip"><div class="stat-num">${pohon.toLocaleString('id-ID')}</div><div class="stat-lbl">Pohon</div></div>`;
+    '<div class="stat-chip"><div class="stat-num">'+total+'</div><div class="stat-lbl">Blok</div></div>'+
+    '<div class="stat-chip"><div class="stat-num">'+arabika+'</div><div class="stat-lbl">Arabika</div></div>'+
+    '<div class="stat-chip"><div class="stat-num">'+robusta+'</div><div class="stat-lbl">Robusta</div></div>'+
+    '<div class="stat-chip"><div class="stat-num">'+pohon.toLocaleString('id-ID')+'</div><div class="stat-lbl">Pohon</div></div>';
 
   if (!bloks.length) {
     document.getElementById('kebunList').innerHTML =
-      `<div class="empty-state"><div class="empty-icon">🌱</div><p>Belum ada blok kebun.<br>Tambahkan blok pertama Anda<br>melalui tab <strong>Tambah Blok</strong>!</p></div>`;
+      '<div class="empty-state"><div class="empty-icon">🌱</div><p>Belum ada blok kebun.<br>Tambahkan blok pertama Anda<br>melalui tab <strong>Tambah Blok</strong>!</p></div>';
     return;
   }
-
   document.getElementById('kebunList').innerHTML = bloks.map(blok => {
     const alerts = getAlerts(blok);
-    return `<div class="card">
-      <div class="card-header">
-        <div class="card-title">🏡 ${blok.nama}</div>
-        <button class="delete-btn" onclick="hapusBlok('${blok.id}')">🗑️ Hapus</button>
-      </div>
-      <div class="card-info">
-        <div class="info-row"><span class="info-label">Lokasi</span><span class="info-val">📍 ${blok.lokasi}</span></div>
-        <div class="info-row"><span class="info-label">Ketinggian</span><span class="info-val">⛰️ ${parseInt(blok.mdpl).toLocaleString('id-ID')} mdpl</span></div>
-        <div class="info-row"><span class="info-label">Varietas</span><span class="badge badge-${blok.varietas.toLowerCase()}">${blok.varietas}</span></div>
-        <div class="info-row"><span class="info-label">Pupuk</span><span class="badge badge-${blok.pupuk.toLowerCase()}">${blok.pupuk}</span></div>
-        <div class="info-row"><span class="info-label">Cuaca</span><span class="badge badge-${blok.cuaca.toLowerCase()}">${blok.cuaca}</span></div>
-        <div class="info-row"><span class="info-label">Tanam</span><span class="info-val">${new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</span></div>
-        <div class="info-row"><span class="info-label">Pohon</span><span class="info-val">🌱 ${parseInt(blok.pohon).toLocaleString('id-ID')} pohon</span></div>
-      </div>
-      ${alerts.map(a => `<div class="alert">${a}</div>`).join('')}
-    </div>`;
+    const zona = getZona(blok.mdpl);
+    const z = getZonaLabel(zona);
+    return '<div class="card">'+
+      '<div class="card-header"><div class="card-title">🏡 '+blok.nama+'</div>'+
+      '<button class="delete-btn" onclick="hapusBlok(\''+blok.id+'\')">🗑️ Hapus</button></div>'+
+      '<div class="zona-badge '+z.cls+'">'+z.icon+' '+z.label+'</div>'+
+      '<div class="card-info">'+
+      '<div class="info-row"><span class="info-label">Lokasi</span><span class="info-val">📍 '+blok.lokasi+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Ketinggian</span><span class="info-val">⛰️ '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl</span></div>'+
+      '<div class="info-row"><span class="info-label">Varietas</span><span class="badge badge-'+blok.varietas.toLowerCase()+'">'+blok.varietas+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Pupuk</span><span class="badge badge-'+blok.pupuk.toLowerCase()+'">'+blok.pupuk+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Cuaca</span><span class="badge badge-'+blok.cuaca.toLowerCase()+'">'+blok.cuaca+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Tanam</span><span class="info-val">'+new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Pohon</span><span class="info-val">🌱 '+parseInt(blok.pohon).toLocaleString('id-ID')+' pohon</span></div>'+
+      '</div>'+
+      alerts.map(a => '<div class="'+(a.type==='warn'?'alert':'alert-info')+'">'+a.msg+'</div>').join('')+
+      '</div>';
   }).join('');
 }
 
@@ -422,69 +503,62 @@ function renderJadwal() {
   let all = [];
   bloks.forEach(b => all = all.concat(generateTasks(b)));
   all.sort((a,b) => a.targetDate - b.targetDate);
-  const filtered = currentFilter === 'semua' ? all : all.filter(t => t.type === currentFilter);
-
+  const filtered = currentFilter==='semua' ? all : all.filter(t=>t.type===currentFilter);
   if (!filtered.length) {
     document.getElementById('jadwalList').innerHTML =
-      `<div class="empty-state"><div class="empty-icon">📅</div><p>${!bloks.length ? 'Tambahkan blok kebun<br>untuk melihat jadwal kerja.' : 'Tidak ada jadwal untuk filter ini.'}</p></div>`;
+      '<div class="empty-state"><div class="empty-icon">📅</div><p>'+(!bloks.length?'Tambahkan blok kebun<br>untuk melihat jadwal kerja.':'Tidak ada jadwal untuk filter ini.')+'</p></div>';
     return;
   }
-
   document.getElementById('jadwalList').innerHTML = filtered.map(t => {
     const rel = relativeDay(t.targetDate);
     const od = t.targetDate < new Date();
-    return `<div class="schedule-item type-${t.type}">
-      <div class="sched-icon">${t.icon}</div>
-      <div class="sched-body">
-        <div class="sched-task">${t.task}</div>
-        <div class="sched-block">📍 ${t.blokNama} — ${t.lokasi}</div>
-      </div>
-      <div class="sched-date">
-        <div class="sched-date-main ${od?'overdue':''}">${formatDate(t.targetDate)}</div>
-        <div class="sched-date-rel ${od?'overdue':''}">${rel}</div>
-      </div>
-    </div>`;
+    return '<div class="schedule-item type-'+t.type+'">'+
+      '<div class="sched-icon">'+t.icon+'</div>'+
+      '<div class="sched-body">'+
+      '<div class="sched-task">'+t.task+'</div>'+
+      '<div class="sched-block">📍 '+t.blokNama+' — '+t.lokasi+'</div>'+
+      (t.zonaNote ? '<div class="sched-zona">ℹ️ '+t.zonaNote+'</div>' : '')+
+      '</div>'+
+      '<div class="sched-date">'+
+      '<div class="sched-date-main '+(od?'overdue':'')+'">'+formatDate(t.targetDate)+'</div>'+
+      '<div class="sched-date-rel '+(od?'overdue':'')+'">'+rel+'</div>'+
+      '</div></div>';
   }).join('');
 }
 
-function filterSchedule(type, btn) {
-  currentFilter = type;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+function filterSchedule(type,btn) {
+  currentFilter=type;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   renderJadwal();
 }
 
 function tambahBlok() {
-  const nama = document.getElementById('f_nama').value.trim();
-  const lokasi = document.getElementById('f_lokasi').value.trim();
-  const mdpl = document.getElementById('f_mdpl').value;
-  const tanggal = document.getElementById('f_tanggal').value;
-  const pohon = document.getElementById('f_pohon').value;
-  if (!nama||!lokasi||!mdpl||!tanggal||!pohon) { showToast('⚠️ Harap isi semua kolom!'); return; }
-
-  bloks.push({ id:Date.now().toString(), nama, lokasi, mdpl,
-    varietas:formState.varietas, pupuk:formState.pupuk, cuaca:formState.cuaca, tanggal, pohon });
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks)); } catch(e) {}
-
-  ['f_nama','f_lokasi','f_mdpl','f_tanggal','f_pohon'].forEach(id => document.getElementById(id).value='');
-  formState.varietas='Arabika'; formState.pupuk='Organik'; formState.cuaca='Kemarau';
-  document.querySelectorAll('.toggle-opt').forEach(o =>
-    o.classList.toggle('selected', o.dataset.val === formState[o.dataset.field]));
-
-  showToast('✅ Blok "' + nama + '" berhasil ditambahkan!');
+  const nama=document.getElementById('f_nama').value.trim();
+  const lokasi=document.getElementById('f_lokasi').value.trim();
+  const mdpl=document.getElementById('f_mdpl').value;
+  const tanggal=document.getElementById('f_tanggal').value;
+  const pohon=document.getElementById('f_pohon').value;
+  if(!nama||!lokasi||!mdpl||!tanggal||!pohon){showToast('⚠️ Harap isi semua kolom!');return;}
+  bloks.push({id:Date.now().toString(),nama,lokasi,mdpl,varietas:formState.varietas,pupuk:formState.pupuk,cuaca:formState.cuaca,tanggal,pohon});
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(bloks));}catch(e){}
+  ['f_nama','f_lokasi','f_mdpl','f_tanggal','f_pohon'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('zonaPreview').style.display='none';
+  formState.varietas='Arabika';formState.pupuk='Organik';formState.cuaca='Kemarau';
+  document.querySelectorAll('.toggle-opt').forEach(o=>o.classList.toggle('selected',o.dataset.val===formState[o.dataset.field]));
+  showToast('✅ Blok "'+nama+'" berhasil ditambahkan!');
   switchTab('kebun');
 }
 
 function hapusBlok(id) {
-  if (!confirm('Hapus blok ini beserta seluruh jadwalnya?')) return;
-  bloks = bloks.filter(b => b.id !== id);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks)); } catch(e) {}
+  if(!confirm('Hapus blok ini beserta seluruh jadwalnya?'))return;
+  bloks=bloks.filter(b=>b.id!==id);
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(bloks));}catch(e){}
   renderKebun();
   showToast('🗑️ Blok berhasil dihapus.');
 }
 
-// Init
-document.getElementById('f_tanggal').value = new Date().toISOString().split('T')[0];
+document.getElementById('f_tanggal').value=new Date().toISOString().split('T')[0];
 renderKebun();
 </script>
 </body>
