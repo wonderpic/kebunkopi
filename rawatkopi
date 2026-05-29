@@ -4,29 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Talaga Hangsa KopiPlanPro</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --green-50:#f0faf0;--green-100:#d6f0d6;--green-200:#a8dba8;
-    --green-400:#4caf50;--green-500:#388e3c;--green-600:#2e7d32;
+    --green-50:#f0faf0;--green-100:#d6f0d6;
+    --green-500:#388e3c;--green-600:#2e7d32;
     --green-700:#1b5e20;--green-800:#145214;
-    --brown-100:#efebe9;--brown-300:#bcaaa4;--brown-500:#795548;--brown-700:#4e342e;
-    --amber-300:#ffd54f;--amber-500:#ff8f00;
-    --cream:#fdfaf4;--text-dark:#1a2e1a;--text-mid:#3a5a3a;--text-muted:#6a8a6a;
-    --danger:#c62828;--warning-bg:#fff3e0;--warning-border:#e65100;--warning-text:#bf360c;
-    --card-bg:rgba(255,255,255,0.88);--card-border:rgba(46,125,50,0.18);
+    --amber-300:#ffd54f;
+    --text-dark:#1a2e1a;--text-mid:#3a5a3a;--text-muted:#6a8a6a;
+    --warning-bg:#fff3e0;--warning-border:#e65100;--warning-text:#bf360c;
+    --card-bg:rgba(255,255,255,0.90);--card-border:rgba(46,125,50,0.18);
     --shadow:0 4px 24px rgba(27,94,32,0.10);--radius:16px;--radius-sm:10px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    font-family:'Plus Jakarta Sans',sans-serif;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     background:linear-gradient(160deg,#1b5e20 0%,#2e7d32 30%,#388e3c 60%,#558b2f 85%,#8d6e63 100%);
     min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
   }
   .app-shell{width:100%;max-width:430px;min-height:100vh;display:flex;flex-direction:column;}
+
+  /* HEADER */
   .app-header{
     background:linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0.08) 100%);
-    backdrop-filter:blur(8px);padding:40px 24px 28px;text-align:center;
+    padding:40px 24px 28px;text-align:center;
   }
   .logo-wrap{
     width:72px;height:72px;background:rgba(255,255,255,0.15);
@@ -34,145 +34,144 @@
     display:flex;align-items:center;justify-content:center;
     margin:0 auto 14px;font-size:32px;
   }
-  .app-title{font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:0.3px;line-height:1.2;}
+  .app-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:0.3px;line-height:1.2;}
   .app-title span{color:var(--amber-300);}
-  .app-subtitle{font-size:12px;color:rgba(255,255,255,0.72);margin-top:5px;letter-spacing:0.5px;text-transform:uppercase;}
+  .app-subtitle{font-size:11px;color:rgba(255,255,255,0.72);margin-top:5px;letter-spacing:0.8px;text-transform:uppercase;}
+
+  /* NAV */
   .nav-bar{
-    background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);
-    display:flex;border-bottom:1px solid rgba(46,125,50,0.12);position:sticky;top:0;z-index:100;
+    background:rgba(255,255,255,0.97);display:flex;
+    border-bottom:1px solid rgba(46,125,50,0.12);position:sticky;top:0;z-index:100;
   }
   .nav-btn{
-    flex:1;padding:14px 6px 12px;background:none;border:none;cursor:pointer;
-    font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-muted);
-    display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.2s;
-    border-bottom:3px solid transparent;
+    flex:1;padding:13px 4px 11px;background:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:10.5px;font-weight:500;color:var(--text-muted);
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    border-bottom:3px solid transparent;transition:all 0.2s;
   }
-  .nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .nav-btn.active{color:var(--green-600);border-bottom-color:var(--green-500);font-weight:600;}
+  .nav-btn .icon{font-size:20px;line-height:1;}
+  .nav-btn.active{color:var(--green-600);border-bottom-color:var(--green-500);font-weight:700;}
   .nav-btn:hover:not(.active){color:var(--green-500);background:var(--green-50);}
-  .content{flex:1;padding:16px 14px 80px;}
+
+  /* CONTENT */
+  .content{flex:1;padding:16px 13px 80px;}
   .tab-panel{display:none;} .tab-panel.active{display:block;}
+
   .section-title{
-    font-family:'Playfair Display',serif;font-size:18px;color:#fff;margin-bottom:14px;
+    font-size:17px;font-weight:700;color:#fff;margin-bottom:13px;
     text-shadow:0 1px 4px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;
   }
   .section-title::before{content:'';width:4px;height:20px;background:var(--amber-300);border-radius:2px;display:inline-block;}
-  .card{
-    background:var(--card-bg);border:1px solid var(--card-border);
-    border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);
-  }
-  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .card-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--text-dark);font-weight:600;}
-  .badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:0.4px;text-transform:uppercase;}
+
+  /* STATS */
+  .stats-bar{display:flex;gap:8px;margin-bottom:14px;}
+  .stat-chip{flex:1;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:10px 6px;text-align:center;}
+  .stat-num{font-size:20px;font-weight:700;color:#fff;line-height:1;}
+  .stat-lbl{font-size:9.5px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.3px;margin-top:3px;}
+
+  /* CARD */
+  .card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:15px;margin-bottom:12px;box-shadow:var(--shadow);}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+  .card-title{font-size:14.5px;font-weight:700;color:var(--text-dark);}
+  .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:0.3px;text-transform:uppercase;display:inline-block;}
   .badge-arabika{background:#e8f5e9;color:#1b5e20;} .badge-robusta{background:#fbe9e7;color:#bf360c;}
   .badge-organik{background:#f1f8e9;color:#33691e;} .badge-kimia{background:#e3f2fd;color:#1565c0;}
   .badge-kemarau{background:#fff3e0;color:#e65100;} .badge-hujan{background:#e8eaf6;color:#283593;}
-  .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;}
+  .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .info-row{display:flex;flex-direction:column;gap:2px;}
-  .info-label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.4px;}
-  .info-val{color:var(--text-dark);font-weight:500;}
+  .info-label{color:var(--text-muted);font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;}
+  .info-val{color:var(--text-dark);font-weight:500;font-size:13px;}
   .alert{
     background:var(--warning-bg);border:1px solid var(--warning-border);
     border-left:4px solid var(--warning-border);border-radius:var(--radius-sm);
-    padding:10px 12px;font-size:12.5px;color:var(--warning-text);margin-top:10px;
-    display:flex;align-items:flex-start;gap:8px;
+    padding:9px 11px;font-size:12px;color:var(--warning-text);margin-top:10px;line-height:1.5;
   }
-  .alert svg{width:16px;height:16px;stroke:var(--warning-border);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px;}
-  .delete-btn{
-    background:none;border:1px solid rgba(198,40,40,0.3);color:#c62828;
-    border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:all 0.15s;
-  }
+  .delete-btn{background:none;border:1px solid rgba(198,40,40,0.3);color:#c62828;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;}
   .delete-btn:hover{background:#ffebee;}
-  .empty-state{text-align:center;padding:48px 24px;color:rgba(255,255,255,0.6);}
-  .empty-state svg{width:56px;height:56px;stroke:rgba(255,255,255,0.35);fill:none;stroke-width:1.2;margin:0 auto 14px;display:block;}
-  .empty-state p{font-size:14px;line-height:1.6;}
+
+  /* SCHEDULE */
+  .sched-filter{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;}
+  .filter-chip{
+    background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);
+    color:rgba(255,255,255,0.85);border-radius:20px;padding:5px 12px;
+    font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;
+  }
+  .filter-chip.active{background:rgba(255,255,255,0.92);color:var(--green-700);font-weight:700;}
   .schedule-item{
     background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-sm);
-    padding:13px 14px;margin-bottom:10px;box-shadow:0 2px 12px rgba(27,94,32,0.08);
-    display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;
+    padding:12px 13px;margin-bottom:9px;box-shadow:0 2px 10px rgba(27,94,32,0.07);
+    display:flex;align-items:center;gap:11px;position:relative;overflow:hidden;
   }
   .schedule-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
-  .schedule-item.type-pupuk::before{background:#558b2f;}
-  .schedule-item.type-pangkas::before{background:#00838f;}
-  .schedule-item.type-panen::before{background:#e65100;}
-  .schedule-item.type-siram::before{background:#1565c0;}
-  .schedule-item.type-drainase::before{background:#6a1b9a;}
-  .schedule-item.type-gulma::before{background:#4e342e;}
-  .schedule-item.type-wiwilan::before{background:#00695c;}
-  .sched-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .type-pupuk::before{background:#558b2f;} .type-pangkas::before{background:#00838f;}
+  .type-panen::before{background:#e65100;} .type-siram::before{background:#1565c0;}
+  .type-drainase::before{background:#6a1b9a;} .type-gulma::before{background:#4e342e;}
+  .type-wiwilan::before{background:#00695c;}
+  .sched-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
   .type-pupuk .sched-icon{background:#f1f8e9;} .type-pangkas .sched-icon{background:#e0f7fa;}
   .type-panen .sched-icon{background:#fff3e0;} .type-siram .sched-icon{background:#e3f2fd;}
   .type-drainase .sched-icon{background:#f3e5f5;} .type-gulma .sched-icon{background:#efebe9;}
   .type-wiwilan .sched-icon{background:#e0f2f1;}
   .sched-body{flex:1;min-width:0;}
-  .sched-task{font-size:13.5px;font-weight:600;color:var(--text-dark);margin-bottom:2px;}
-  .sched-block{font-size:11.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sched-task{font-size:13px;font-weight:600;color:var(--text-dark);margin-bottom:2px;}
+  .sched-block{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .sched-date{text-align:right;flex-shrink:0;}
-  .sched-date-main{font-size:13px;font-weight:600;color:var(--green-600);}
-  .sched-date-rel{font-size:10.5px;color:var(--text-muted);margin-top:2px;}
+  .sched-date-main{font-size:12.5px;font-weight:600;color:var(--green-600);}
+  .sched-date-rel{font-size:10px;color:var(--text-muted);margin-top:2px;}
   .overdue{color:#c62828 !important;}
-  .form-card{
-    background:var(--card-bg);border:1px solid var(--card-border);
-    border-radius:var(--radius);padding:20px 16px;box-shadow:var(--shadow);
+
+  /* SOURCE NOTE */
+  .source-note{
+    background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);
+    border-radius:10px;padding:10px 13px;margin-bottom:13px;
+    font-size:11px;color:rgba(255,255,255,0.78);line-height:1.6;
   }
-  .form-group{margin-bottom:15px;}
-  .form-label{display:block;font-size:12px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
-  .form-input,.form-select{
-    width:100%;padding:11px 13px;border:1.5px solid rgba(46,125,50,0.22);
-    border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:14px;color:var(--text-dark);background:#fff;outline:none;transition:border-color 0.15s;appearance:none;
+  .source-note strong{color:rgba(255,255,255,0.95);}
+
+  /* FORM */
+  .form-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px 15px;box-shadow:var(--shadow);}
+  .form-group{margin-bottom:14px;}
+  .form-label{display:block;font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .form-input{
+    width:100%;padding:11px 12px;border:1.5px solid rgba(46,125,50,0.22);
+    border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text-dark);
+    background:#fff;outline:none;transition:border-color 0.15s;
   }
-  .form-input:focus,.form-select:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(56,142,60,0.12);}
+  .form-input:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(56,142,60,0.12);}
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .toggle-group{display:flex;gap:8px;}
   .toggle-opt{
-    flex:1;padding:10px 6px;border:1.5px solid rgba(46,125,50,0.22);
-    border-radius:var(--radius-sm);text-align:center;font-size:13px;font-weight:500;
+    flex:1;padding:10px 5px;border:1.5px solid rgba(46,125,50,0.22);
+    border-radius:var(--radius-sm);text-align:center;font-size:12.5px;font-weight:500;
     color:var(--text-mid);cursor:pointer;background:#fff;transition:all 0.15s;user-select:none;
   }
-  .toggle-opt.selected{border-color:var(--green-600);background:var(--green-50);color:var(--green-700);font-weight:600;}
+  .toggle-opt.selected{border-color:var(--green-600);background:var(--green-50);color:var(--green-700);font-weight:700;}
   .submit-btn{
     width:100%;padding:14px;background:linear-gradient(135deg,#2e7d32,#388e3c);
-    color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.3px;transition:all 0.15s;margin-top:6px;
+    color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;
+    font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;
     display:flex;align-items:center;justify-content:center;gap:8px;
   }
-  .submit-btn:hover{background:linear-gradient(135deg,#1b5e20,#2e7d32);}
   .submit-btn:active{transform:scale(0.98);}
-  .submit-btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2;}
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:48px 24px;color:rgba(255,255,255,0.6);}
+  .empty-state .empty-icon{font-size:52px;margin-bottom:14px;}
+  .empty-state p{font-size:14px;line-height:1.7;}
+
+  /* TOAST */
   .toast{
     position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);
-    background:#1b5e20;color:#fff;padding:12px 20px;border-radius:24px;font-size:13.5px;
-    font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;transition:all 0.3s ease;
-    z-index:999;white-space:nowrap;
+    background:#1b5e20;color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;
+    font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;
+    transition:all 0.3s ease;z-index:999;white-space:nowrap;pointer-events:none;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .stats-bar{display:flex;gap:8px;margin-bottom:14px;}
-  .stat-chip{flex:1;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:10px 8px;text-align:center;}
-  .stat-num{font-size:20px;font-weight:700;color:#fff;line-height:1;}
-  .stat-lbl{font-size:10px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.3px;margin-top:3px;}
-  .sched-filter{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;}
-  .filter-chip{
-    background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);
-    color:rgba(255,255,255,0.85);border-radius:20px;padding:5px 13px;font-size:11.5px;
-    font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-family:inherit;
-  }
-  .filter-chip.active{background:rgba(255,255,255,0.92);color:var(--green-700);font-weight:600;}
-  select.form-select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23388e3c' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
-  }
-  /* Source note */
-  .source-note{
-    background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);
-    border-radius:10px;padding:10px 13px;margin-bottom:14px;
-    font-size:11px;color:rgba(255,255,255,0.78);line-height:1.5;
-  }
-  .source-note strong{color:rgba(255,255,255,0.95);}
 </style>
 </head>
 <body>
 <div class="app-shell">
+
   <div class="app-header">
     <div class="logo-wrap">☕</div>
     <div class="app-title">Talaga Hangsa <span>KopiPlanPro</span></div>
@@ -181,46 +180,43 @@
 
   <nav class="nav-bar">
     <button class="nav-btn active" data-tab="kebun" onclick="switchTab('kebun')">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Data Kebun
+      <span class="icon">🏡</span>Data Kebun
     </button>
     <button class="nav-btn" data-tab="jadwal" onclick="switchTab('jadwal')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Jadwal Kerja
+      <span class="icon">📅</span>Jadwal Kerja
     </button>
     <button class="nav-btn" data-tab="tambah" onclick="switchTab('tambah')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Tambah Blok
+      <span class="icon">➕</span>Tambah Blok
     </button>
   </nav>
 
   <div class="content">
 
-    <!-- DATA KEBUN -->
+    <!-- TAB: DATA KEBUN -->
     <div id="tab-kebun" class="tab-panel active">
       <div class="stats-bar" id="statsBar"></div>
       <div class="section-title">Blok Kebun Aktif</div>
       <div id="kebunList"></div>
     </div>
 
-    <!-- JADWAL KERJA -->
+    <!-- TAB: JADWAL KERJA -->
     <div id="tab-jadwal" class="tab-panel">
       <div class="section-title">Jadwal Kerja Terdekat</div>
       <div class="source-note">
-        <strong>📚 Sumber data jadwal:</strong> Puslitkoka (Pusat Penelitian Kopi &amp; Kakao Indonesia), BBPP Lembang Kementan, GAP Kopi Kementan RI, cybex.pertanian.go.id
+        <strong>📚 Basis data ilmiah:</strong> Puslitkoka, BBPP Lembang Kementan, GAP Kopi Kementan RI, cybex.pertanian.go.id, repository.pertanian.go.id
       </div>
       <div class="sched-filter">
         <button class="filter-chip active" onclick="filterSchedule('semua',this)">Semua</button>
-        <button class="filter-chip" onclick="filterSchedule('pupuk',this)">Pupuk</button>
-        <button class="filter-chip" onclick="filterSchedule('siram',this)">Siram</button>
-        <button class="filter-chip" onclick="filterSchedule('gulma',this)">Gulma</button>
-        <button class="filter-chip" onclick="filterSchedule('pangkas',this)">Pangkas</button>
-        <button class="filter-chip" onclick="filterSchedule('panen',this)">Panen</button>
+        <button class="filter-chip" onclick="filterSchedule('pupuk',this)">🌿 Pupuk</button>
+        <button class="filter-chip" onclick="filterSchedule('siram',this)">💧 Siram</button>
+        <button class="filter-chip" onclick="filterSchedule('gulma',this)">🌾 Gulma</button>
+        <button class="filter-chip" onclick="filterSchedule('pangkas',this)">✂️ Pangkas</button>
+        <button class="filter-chip" onclick="filterSchedule('panen',this)">☕ Panen</button>
       </div>
       <div id="jadwalList"></div>
     </div>
 
-    <!-- TAMBAH BLOK -->
+    <!-- TAB: TAMBAH BLOK -->
     <div id="tab-tambah" class="tab-panel">
       <div class="section-title">Tambah Blok Baru</div>
       <div class="form-card">
@@ -235,7 +231,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Ketinggian (mdpl)</label>
-            <input class="form-input" id="f_mdpl" type="number" placeholder="cth: 1200" min="0" max="3000">
+            <input class="form-input" id="f_mdpl" type="number" placeholder="1200" min="0" max="3000">
           </div>
         </div>
         <div class="form-group">
@@ -249,7 +245,7 @@
           <label class="form-label">Metode Pupuk</label>
           <div class="toggle-group">
             <div class="toggle-opt selected" data-field="pupuk" data-val="Organik" onclick="selectToggle(this)">🍃 Organik</div>
-            <div class="toggle-opt" data-field="pupuk" data-val="Kimia" onclick="selectToggle(this)">⚗️ Kimia/Anorganik</div>
+            <div class="toggle-opt" data-field="pupuk" data-val="Kimia" onclick="selectToggle(this)">⚗️ Kimia</div>
           </div>
         </div>
         <div class="form-group">
@@ -266,24 +262,21 @@
           </div>
           <div class="form-group">
             <label class="form-label">Jumlah Pohon</label>
-            <input class="form-input" id="f_pohon" type="number" placeholder="cth: 150" min="1">
+            <input class="form-input" id="f_pohon" type="number" placeholder="150" min="1">
           </div>
         </div>
-        <button class="submit-btn" onclick="tambahBlok()">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Simpan Blok
-        </button>
+        <button class="submit-btn" onclick="tambahBlok()">➕ Simpan Blok</button>
       </div>
     </div>
 
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 const STORAGE_KEY = 'kopiplanpro_v3';
-let bloks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let bloks = [];
+try { bloks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { bloks = []; }
 let currentFilter = 'semua';
 const formState = { varietas:'Arabika', pupuk:'Organik', cuaca:'Kemarau' };
 
@@ -315,184 +308,101 @@ function addDays(dateStr, days) {
   d.setDate(d.getDate() + days);
   return d;
 }
-
 function formatDate(d) {
   return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
 }
-
 function relativeDay(d) {
   const today = new Date(); today.setHours(0,0,0,0);
   const diff = Math.round((d - today) / 86400000);
-  if (diff < 0) return `${Math.abs(diff)} hari lalu`;
+  if (diff < 0) return Math.abs(diff) + ' hari lalu';
   if (diff === 0) return 'Hari ini!';
   if (diff === 1) return 'Besok';
-  return `${diff} hari lagi`;
+  return diff + ' hari lagi';
 }
-
-/*
- * JADWAL BERDASARKAN DATA ILMIAH RESMI
- * ─────────────────────────────────────────────────────────────
- * Sumber: Puslitkoka, BBPP Lembang Kementan, GAP Kopi Kementan RI,
- *         cybex.pertanian.go.id, repository.pertanian.go.id
- *
- * PEMUPUKAN
- *   - Organik (pupuk kandang/kompos): 10-20 kg/pohon/tahun
- *     Diberikan 2× setahun → interval ~180 hari
- *     (Sumber: BBPP Lembang / GAP Kopi Kementan)
- *   - Anorganik/Kimia (Urea+SP36+KCl): 2–4× setahun
- *     Awal & akhir musim hujan → interval ~180 hari
- *     (Sumber: cybex.pertanian.go.id, Puslitkoka, Gokomodo/Kementan)
- *     Pertama pada umur ~2 bulan (60 hari) setelah tanam
- *
- * PEMANGKASAN ARABIKA (sistem batang tunggal)
- *   - Pangkas Pembentukan: umur 1–2 tahun (hari ke-365 & ke-540)
- *   - Pangkas Produksi/Lewat Panen: tiap tahun setelah panen pertama
- *     (mulai hari ke-1095+365 = ke-1460, tiap 365 hari)
- *   (Sumber: BBPP Lembang, cybex.pertanian.go.id, Puslitkoka 2010)
- *
- * PANGKAS WIWILAN ROBUSTA
- *   - Wiwilan pertama: ~bulan ke-6 (180 hari) untuk membuang tunas liar
- *   - Pemangkasan produksi: setelah panen pertama (hari ke-900), tiap tahun
- *   (Sumber: Dinas Pertanian Buleleng, cybex.pertanian.go.id)
- *
- * PANEN
- *   - Robusta: mulai umur 2,5 tahun = hari ke-900
- *     (konsensus multi-sumber: Puslitkoka, alamtani.com, gramedia.com)
- *   - Arabika: mulai umur 3 tahun = hari ke-1095
- *     (konsensus multi-sumber: Puslitkoka, cybex.pertanian.go.id)
- *
- * PENYIRAMAN KEMARAU
- *   - Bibit/tanaman muda: setiap 3 hari (Puslitkoka/Pedoman Robusta Lampung)
- *   - Diulang setiap 3 hari untuk 6 siklus pertama (18 hari pertama)
- *
- * PENYIANGAN GULMA (Musim Hujan & Kemarau)
- *   - Setiap 2 minggu/14 hari
- *   (Sumber: agribisnis.uma.ac.id, Puslitkoka)
- *
- * DRAINASE (Musim Hujan)
- *   - Pantau & bersihkan saluran setiap 7 hari
- *   (Sumber: praktik GAP Kementan untuk lahan kopi)
- *
- * SMART ALERT GEOGRAFI
- *   - Arabika < 1000 mdpl: risiko karat daun (Hemileia vastatrix)
- *     (Sumber: Puslitkoka 2010, repository.pertanian.go.id hal.3)
- *   - Robusta > 900 mdpl: di luar zona optimal (optimal 400-900 mdpl)
- *     risiko pembungaan lambat
- *     (Sumber: BBPP Lembang, cybex.pertanian.go.id)
- */
 
 function generateTasks(blok) {
   const tasks = [];
-  const plant = blok.tanggal;
-
   const add = (label, daysArr, type, icon) => {
-    daysArr.forEach(d => {
-      tasks.push({
-        blokId: blok.id,
-        blokNama: blok.nama,
-        lokasi: blok.lokasi,
-        task: label,
-        targetDate: addDays(plant, d),
-        type, icon
-      });
-    });
+    daysArr.forEach(d => tasks.push({
+      blokId:blok.id, blokNama:blok.nama, lokasi:blok.lokasi,
+      task:label, targetDate:addDays(blok.tanggal, d), type, icon
+    }));
   };
 
-  // ── PEMUPUKAN ──────────────────────────────────────────────
-  // Pertama pada hari ke-60 (umur ~2 bulan), lalu tiap 180 hari
-  // Selama 5 tahun (1825 hari) → maksimal 10 sesi
-  if (blok.pupuk === 'Organik') {
-    const label = 'Pemupukan Organik (10–20 kg/pohon)';
-    const days = [];
-    for (let d = 60; d <= 1825; d += 180) days.push(d);
-    add(label, days, 'pupuk', '🌿');
-  } else {
-    const label = 'Pemupukan Anorganik (Urea+SP36+KCl)';
-    const days = [];
-    for (let d = 60; d <= 1825; d += 180) days.push(d);
-    add(label, days, 'pupuk', '⚗️');
-  }
+  // PEMUPUKAN — 2x setahun (~180 hari), mulai hari ke-60
+  // Sumber: Puslitkoka, BBPP Lembang, GAP Kementan
+  const labelPupuk = blok.pupuk === 'Organik'
+    ? 'Pemupukan Organik (10–20 kg/pohon)'
+    : 'Pemupukan Anorganik (Urea+SP36+KCl)';
+  const daysPupuk = [];
+  for (let d = 60; d <= 1825; d += 180) daysPupuk.push(d);
+  add(labelPupuk, daysPupuk, 'pupuk', blok.pupuk === 'Organik' ? '🍃' : '⚗️');
 
-  // ── VARIETAS-SPESIFIK ─────────────────────────────────────
+  // VARIETAS
   if (blok.varietas === 'Arabika') {
-    // Pangkas pembentukan: tahun ke-1 dan ke-2 (hari ke-365, ke-540)
+    // Pangkas pembentukan: umur 1–2 tahun | Sumber: BBPP Lembang, cybex.pertanian.go.id
     add('Pangkas Pembentukan Arabika', [365, 540], 'pangkas', '✂️');
-    // Pangkas produksi: tiap tahun setelah panen pertama (mulai hari ke-1095+365)
+    // Pangkas produksi: tiap tahun setelah panen | Sumber: Puslitkoka 2010
     add('Pangkas Produksi/Lewat Panen', [1460, 1825], 'pangkas', '✂️');
-    // Panen pertama: umur 3 tahun = hari ke-1095
+    // Panen: umur 3 tahun | Sumber: Puslitkoka, repository.pertanian.go.id
     add('Panen Perdana Arabika', [1095], 'panen', '☕');
     add('Panen Arabika Tahun ke-4', [1460], 'panen', '☕');
   } else {
-    // Wiwilan pertama: bulan ke-6 untuk buang tunas liar
+    // Wiwilan perdana: bulan ke-6 | Sumber: Dinas Pertanian Buleleng
     add('Wiwilan Perdana Robusta', [180], 'wiwilan', '🌿');
-    // Wiwilan tahunan berikutnya
     add('Wiwilan Robusta Tahunan', [545, 910], 'wiwilan', '🌿');
-    // Panen pertama: umur 2,5 tahun = hari ke-900
+    // Panen: umur 2,5 tahun | Sumber: Puslitkoka, alamtani.com, cybex.pertanian.go.id
     add('Panen Perdana Robusta', [900], 'panen', '☕');
     add('Panen Robusta Tahun ke-4', [1265], 'panen', '☕');
   }
 
-  // ── CUACA ──────────────────────────────────────────────────
+  // CUACA
   if (blok.cuaca === 'Kemarau') {
-    // Penyiraman setiap 3 hari untuk 6 siklus awal (18 hari pertama)
-    add('Penyiraman Rutin', [3, 6, 9, 12, 15, 18], 'siram', '💧');
-    // Penyiraman lanjutan tiap 3 hari, bulan pertama lanjut
-    add('Penyiraman Lanjutan', [21, 24, 27, 30], 'siram', '💧');
+    // Siram tiap 3 hari | Sumber: Puslitkoka, Kepmentan No.27/2021
+    add('Penyiraman Rutin', [3,6,9,12,15,18,21,24,27,30], 'siram', '💧');
   } else {
-    // Musim hujan: pantau drainase tiap 7 hari (bulan pertama)
-    add('Periksa Saluran Drainase', [7, 14, 21, 28], 'drainase', '🌊');
-    // Penyiangan gulma setiap 14 hari
-    add('Penyiangan Gulma', [14, 28, 42, 56, 70, 84], 'gulma', '🌾');
+    // Drainase tiap 7 hari | Sumber: GAP Kementan
+    add('Periksa Saluran Drainase', [7,14,21,28], 'drainase', '🌊');
   }
-  // Gulma juga wajib pada kemarau setiap 14 hari (pertumbuhan lebih lambat tapi tetap ada)
-  if (blok.cuaca === 'Kemarau') {
-    add('Penyiangan Gulma', [14, 28, 42, 56, 70, 84], 'gulma', '🌾');
-  }
+  // Gulma tiap 14 hari (semua kondisi) | Sumber: agribisnis.uma.ac.id, Puslitkoka
+  add('Penyiangan Gulma', [14,28,42,56,70,84], 'gulma', '🌾');
 
   return tasks;
 }
 
 function getAlerts(blok) {
-  const alerts = [];
-  const mdpl = parseInt(blok.mdpl);
-  if (blok.varietas === 'Arabika' && mdpl < 1000) {
-    alerts.push('⚠️ Arabika < 1.000 mdpl: risiko tinggi karat daun (Hemileia vastatrix). Pertimbangkan varietas tahan karat atau fungisida preventif. (Sumber: Puslitkoka 2010)');
-  }
-  if (blok.varietas === 'Robusta' && mdpl > 900) {
-    alerts.push('⚠️ Robusta > 900 mdpl: di luar zona optimal (400–900 mdpl). Berisiko pembungaan lambat & produksi tidak maksimal. (Sumber: BBPP Lembang, Kementan)');
-  }
+  const alerts = [], mdpl = parseInt(blok.mdpl);
+  if (blok.varietas === 'Arabika' && mdpl < 1000)
+    alerts.push('⚠️ Arabika < 1.000 mdpl: risiko karat daun (Hemileia vastatrix). Gunakan varietas tahan karat atau fungisida preventif. (Puslitkoka 2010)');
+  if (blok.varietas === 'Robusta' && mdpl > 900)
+    alerts.push('⚠️ Robusta > 900 mdpl: di luar zona optimal (400–900 mdpl). Berisiko pembungaan lambat & produksi tidak maksimal. (BBPP Lembang, Kementan)');
   return alerts;
 }
 
 function renderKebun() {
   const total = bloks.length;
-  const arabika = bloks.filter(b => b.varietas === 'Arabika').length;
-  const robusta = bloks.filter(b => b.varietas === 'Robusta').length;
-  const pohon = bloks.reduce((s, b) => s + parseInt(b.pohon || 0), 0);
+  const arabika = bloks.filter(b => b.varietas==='Arabika').length;
+  const robusta = bloks.filter(b => b.varietas==='Robusta').length;
+  const pohon = bloks.reduce((s,b) => s + parseInt(b.pohon||0), 0);
 
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-chip"><div class="stat-num">${total}</div><div class="stat-lbl">Blok</div></div>
-    <div class="stat-chip"><div class="stat-num">${arabika}</div><div class="stat-lbl">Arabika</div></div>
-    <div class="stat-chip"><div class="stat-num">${robusta}</div><div class="stat-lbl">Robusta</div></div>
-    <div class="stat-chip"><div class="stat-num">${pohon.toLocaleString('id-ID')}</div><div class="stat-lbl">Pohon</div></div>
-  `;
+  document.getElementById('statsBar').innerHTML =
+    `<div class="stat-chip"><div class="stat-num">${total}</div><div class="stat-lbl">Blok</div></div>
+     <div class="stat-chip"><div class="stat-num">${arabika}</div><div class="stat-lbl">Arabika</div></div>
+     <div class="stat-chip"><div class="stat-num">${robusta}</div><div class="stat-lbl">Robusta</div></div>
+     <div class="stat-chip"><div class="stat-num">${pohon.toLocaleString('id-ID')}</div><div class="stat-lbl">Pohon</div></div>`;
 
-  if (bloks.length === 0) {
-    document.getElementById('kebunList').innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 19.83M5.64 9.64C5.64 9.64 8.64 6.64 14 8C14 8 12 12 14 16M13.6 10.4C13.6 10.4 17 9 21 11"/><path d="M3 22C3 22 6 16 9 16C12 16 15 19 15 19"/></svg>
-        <p>Belum ada blok kebun.<br>Tambahkan blok pertama Anda!</p>
-      </div>`;
+  if (!bloks.length) {
+    document.getElementById('kebunList').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">🌱</div><p>Belum ada blok kebun.<br>Tambahkan blok pertama Anda<br>melalui tab <strong>Tambah Blok</strong>!</p></div>`;
     return;
   }
 
   document.getElementById('kebunList').innerHTML = bloks.map(blok => {
     const alerts = getAlerts(blok);
-    return `
-    <div class="card">
+    return `<div class="card">
       <div class="card-header">
         <div class="card-title">🏡 ${blok.nama}</div>
-        <button class="delete-btn" onclick="hapusBlok('${blok.id}')">Hapus</button>
+        <button class="delete-btn" onclick="hapusBlok('${blok.id}')">🗑️ Hapus</button>
       </div>
       <div class="card-info">
         <div class="info-row"><span class="info-label">Lokasi</span><span class="info-val">📍 ${blok.lokasi}</span></div>
@@ -503,44 +413,35 @@ function renderKebun() {
         <div class="info-row"><span class="info-label">Tanam</span><span class="info-val">${new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</span></div>
         <div class="info-row"><span class="info-label">Pohon</span><span class="info-val">🌱 ${parseInt(blok.pohon).toLocaleString('id-ID')} pohon</span></div>
       </div>
-      ${alerts.map(a => `<div class="alert"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${a}</span></div>`).join('')}
+      ${alerts.map(a => `<div class="alert">${a}</div>`).join('')}
     </div>`;
   }).join('');
 }
 
 function renderJadwal() {
-  let allTasks = [];
-  bloks.forEach(blok => allTasks = allTasks.concat(generateTasks(blok)));
+  let all = [];
+  bloks.forEach(b => all = all.concat(generateTasks(b)));
+  all.sort((a,b) => a.targetDate - b.targetDate);
+  const filtered = currentFilter === 'semua' ? all : all.filter(t => t.type === currentFilter);
 
-  // Sort global by targetDate (asc)
-  allTasks.sort((a, b) => a.targetDate - b.targetDate);
-
-  const filtered = currentFilter === 'semua'
-    ? allTasks
-    : allTasks.filter(t => t.type === currentFilter);
-
-  if (filtered.length === 0) {
-    document.getElementById('jadwalList').innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <p>${bloks.length === 0 ? 'Tambahkan blok kebun untuk melihat jadwal kerja.' : 'Tidak ada jadwal untuk filter ini.'}</p>
-      </div>`;
+  if (!filtered.length) {
+    document.getElementById('jadwalList').innerHTML =
+      `<div class="empty-state"><div class="empty-icon">📅</div><p>${!bloks.length ? 'Tambahkan blok kebun<br>untuk melihat jadwal kerja.' : 'Tidak ada jadwal untuk filter ini.'}</p></div>`;
     return;
   }
 
   document.getElementById('jadwalList').innerHTML = filtered.map(t => {
     const rel = relativeDay(t.targetDate);
-    const isOverdue = t.targetDate < new Date();
-    return `
-    <div class="schedule-item type-${t.type}">
+    const od = t.targetDate < new Date();
+    return `<div class="schedule-item type-${t.type}">
       <div class="sched-icon">${t.icon}</div>
       <div class="sched-body">
         <div class="sched-task">${t.task}</div>
         <div class="sched-block">📍 ${t.blokNama} — ${t.lokasi}</div>
       </div>
       <div class="sched-date">
-        <div class="sched-date-main ${isOverdue ? 'overdue' : ''}">${formatDate(t.targetDate)}</div>
-        <div class="sched-date-rel ${isOverdue ? 'overdue' : ''}">${rel}</div>
+        <div class="sched-date-main ${od?'overdue':''}">${formatDate(t.targetDate)}</div>
+        <div class="sched-date-rel ${od?'overdue':''}">${rel}</div>
       </div>
     </div>`;
   }).join('');
@@ -559,35 +460,30 @@ function tambahBlok() {
   const mdpl = document.getElementById('f_mdpl').value;
   const tanggal = document.getElementById('f_tanggal').value;
   const pohon = document.getElementById('f_pohon').value;
+  if (!nama||!lokasi||!mdpl||!tanggal||!pohon) { showToast('⚠️ Harap isi semua kolom!'); return; }
 
-  if (!nama || !lokasi || !mdpl || !tanggal || !pohon) {
-    showToast('⚠️ Harap isi semua kolom!'); return;
-  }
+  bloks.push({ id:Date.now().toString(), nama, lokasi, mdpl,
+    varietas:formState.varietas, pupuk:formState.pupuk, cuaca:formState.cuaca, tanggal, pohon });
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks)); } catch(e) {}
 
-  const blok = { id: Date.now().toString(), nama, lokasi, mdpl, varietas: formState.varietas, pupuk: formState.pupuk, cuaca: formState.cuaca, tanggal, pohon };
-  bloks.push(blok);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks));
+  ['f_nama','f_lokasi','f_mdpl','f_tanggal','f_pohon'].forEach(id => document.getElementById(id).value='');
+  formState.varietas='Arabika'; formState.pupuk='Organik'; formState.cuaca='Kemarau';
+  document.querySelectorAll('.toggle-opt').forEach(o =>
+    o.classList.toggle('selected', o.dataset.val === formState[o.dataset.field]));
 
-  document.getElementById('f_nama').value = '';
-  document.getElementById('f_lokasi').value = '';
-  document.getElementById('f_mdpl').value = '';
-  document.getElementById('f_tanggal').value = '';
-  document.getElementById('f_pohon').value = '';
-  formState.varietas = 'Arabika'; formState.pupuk = 'Organik'; formState.cuaca = 'Kemarau';
-  document.querySelectorAll('.toggle-opt').forEach(o => o.classList.toggle('selected', o.dataset.val === formState[o.dataset.field]));
-
-  showToast(`✅ Blok "${nama}" berhasil ditambahkan!`);
+  showToast('✅ Blok "' + nama + '" berhasil ditambahkan!');
   switchTab('kebun');
 }
 
 function hapusBlok(id) {
   if (!confirm('Hapus blok ini beserta seluruh jadwalnya?')) return;
   bloks = bloks.filter(b => b.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks)); } catch(e) {}
   renderKebun();
   showToast('🗑️ Blok berhasil dihapus.');
 }
 
+// Init
 document.getElementById('f_tanggal').value = new Date().toISOString().split('T')[0];
 renderKebun();
 </script>
