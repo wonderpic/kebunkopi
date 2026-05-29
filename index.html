@@ -33,7 +33,7 @@
     display:flex;align-items:center;justify-content:center;
     margin:0 auto 14px;
     overflow:hidden;
-    background:#000;
+    background:#fff;
     border:2.5px solid rgba(255,255,255,0.25);
     box-shadow:0 4px 20px rgba(0,0,0,0.4);
   }
@@ -142,6 +142,20 @@
   /* TOAST */
   .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(40px);background:#1b5e20;color:#fff;padding:12px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;transition:all 0.3s ease;z-index:999;white-space:nowrap;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* EDIT MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-sheet{
+    background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:430px;
+    padding:20px 16px 40px;max-height:90vh;overflow-y:auto;
+    animation:slideUp 0.28s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px;}
+  .modal-title{font-size:16px;font-weight:700;color:var(--text-dark);margin-bottom:16px;text-align:center;}
+  .edit-btn{background:none;border:1px solid rgba(46,125,50,0.35);color:var(--green-600);border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;margin-right:6px;}
+  .edit-btn:hover{background:var(--green-50);}
 </style>
 </head>
 <body>
@@ -243,6 +257,64 @@
     </div>
   </div>
 </div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" onclick="closeEditOnOverlay(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Edit Blok Kebun</div>
+    <input type="hidden" id="e_id">
+    <div class="form-group">
+      <label class="form-label">Nama Blok</label>
+      <input class="form-input" id="e_nama" type="text">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Lokasi (Kota)</label>
+        <input class="form-input" id="e_lokasi" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ketinggian (mdpl)</label>
+        <input class="form-input" id="e_mdpl" type="number" min="0" max="3000" oninput="previewZonaEdit(this.value)">
+        <div class="mdpl-preview" id="zonaPreviewEdit"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Varietas</label>
+      <div class="toggle-group">
+        <div class="toggle-opt" data-field="e_varietas" data-val="Arabika" onclick="selectToggleEdit(this)">🌿 Arabika</div>
+        <div class="toggle-opt" data-field="e_varietas" data-val="Robusta" onclick="selectToggleEdit(this)">🌱 Robusta</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Metode Pupuk</label>
+      <div class="toggle-group">
+        <div class="toggle-opt" data-field="e_pupuk" data-val="Organik" onclick="selectToggleEdit(this)">🍃 Organik</div>
+        <div class="toggle-opt" data-field="e_pupuk" data-val="Kimia" onclick="selectToggleEdit(this)">⚗️ Kimia</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kondisi Cuaca</label>
+      <div class="toggle-group">
+        <div class="toggle-opt" data-field="e_cuaca" data-val="Kemarau" onclick="selectToggleEdit(this)">☀️ Kemarau</div>
+        <div class="toggle-opt" data-field="e_cuaca" data-val="Hujan" onclick="selectToggleEdit(this)">🌧️ Hujan</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tanggal Tanam</label>
+        <input class="form-input" id="e_tanggal" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah Pohon</label>
+        <input class="form-input" id="e_pohon" type="number" min="1">
+      </div>
+    </div>
+    <button class="submit-btn" onclick="simpanEdit()" style="background:linear-gradient(135deg,#1565c0,#1976d2);">💾 Simpan Perubahan</button>
+    <button onclick="closeEdit()" style="width:100%;padding:12px;background:none;border:1px solid #ccc;border-radius:10px;font-family:inherit;font-size:14px;color:#666;cursor:pointer;margin-top:8px;">Batal</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -483,7 +555,7 @@ function renderKebun() {
     const z = getZonaLabel(zona);
     return '<div class="card">'+
       '<div class="card-header"><div class="card-title">🏡 '+blok.nama+'</div>'+
-      '<button class="delete-btn" onclick="hapusBlok(\''+blok.id+'\')">🗑️ Hapus</button></div>'+
+      '<div style="display:flex;gap:6px;"><button class="edit-btn" onclick="openEdit(\''+blok.id+'\')">✏️ Edit</button><button class="delete-btn" onclick="hapusBlok(\''+blok.id+'\')">🗑️ Hapus</button></div></div>'+
       '<div class="zona-badge '+z.cls+'">'+z.icon+' '+z.label+'</div>'+
       '<div class="card-info">'+
       '<div class="info-row"><span class="info-label">Lokasi</span><span class="info-val">📍 '+blok.lokasi+'</span></div>'+
@@ -560,6 +632,89 @@ function hapusBlok(id) {
 
 document.getElementById('f_tanggal').value=new Date().toISOString().split('T')[0];
 renderKebun();
+
+
+// ── EDIT BLOK ─────────────────────────────────────────────
+const editState = { e_varietas:'Arabika', e_pupuk:'Organik', e_cuaca:'Kemarau' };
+
+function openEdit(id) {
+  const blok = bloks.find(b => b.id === id);
+  if (!blok) return;
+  document.getElementById('e_id').value = blok.id;
+  document.getElementById('e_nama').value = blok.nama;
+  document.getElementById('e_lokasi').value = blok.lokasi;
+  document.getElementById('e_mdpl').value = blok.mdpl;
+  document.getElementById('e_tanggal').value = blok.tanggal;
+  document.getElementById('e_pohon').value = blok.pohon;
+
+  editState.e_varietas = blok.varietas;
+  editState.e_pupuk = blok.pupuk;
+  editState.e_cuaca = blok.cuaca;
+
+  // Set toggle states
+  ['e_varietas','e_pupuk','e_cuaca'].forEach(field => {
+    document.querySelectorAll('.toggle-opt[data-field="'+field+'"]').forEach(o => {
+      o.classList.toggle('selected', o.dataset.val === editState[field]);
+    });
+  });
+
+  previewZonaEdit(blok.mdpl);
+  document.getElementById('editModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEdit() {
+  document.getElementById('editModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeEditOnOverlay(e) {
+  if (e.target === document.getElementById('editModal')) closeEdit();
+}
+
+function selectToggleEdit(el) {
+  const field = el.dataset.field, val = el.dataset.val;
+  editState[field] = val;
+  document.querySelectorAll('.toggle-opt[data-field="'+field+'"]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function previewZonaEdit(val) {
+  const el = document.getElementById('zonaPreviewEdit');
+  if (!val) { el.style.display='none'; return; }
+  const zona = getZona(val);
+  const z = getZonaLabel(zona);
+  el.style.display = 'block';
+  el.className = 'mdpl-preview ' + z.cls;
+  el.textContent = z.icon + ' ' + z.label;
+}
+
+function simpanEdit() {
+  const id = document.getElementById('e_id').value;
+  const nama = document.getElementById('e_nama').value.trim();
+  const lokasi = document.getElementById('e_lokasi').value.trim();
+  const mdpl = document.getElementById('e_mdpl').value;
+  const tanggal = document.getElementById('e_tanggal').value;
+  const pohon = document.getElementById('e_pohon').value;
+
+  if (!nama||!lokasi||!mdpl||!tanggal||!pohon) { showToast('⚠️ Harap isi semua kolom!'); return; }
+
+  const idx = bloks.findIndex(b => b.id === id);
+  if (idx === -1) return;
+
+  bloks[idx] = { id, nama, lokasi, mdpl,
+    varietas: editState.e_varietas,
+    pupuk: editState.e_pupuk,
+    cuaca: editState.e_cuaca,
+    tanggal, pohon
+  };
+
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(bloks)); } catch(e) {}
+  closeEdit();
+  renderKebun();
+  showToast('✅ Blok "'+nama+'" berhasil diperbarui!');
+}
+
 </script>
 </body>
 </html>
