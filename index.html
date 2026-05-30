@@ -298,6 +298,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   box-shadow:0 4px 20px rgba(0,0,0,0.25);opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+
+/* ═══ FOTO BUKTI KERJA ═══ */
+.foto-btn{background:none;border:1.5px dashed #ccc;border-radius:10px;
+  padding:7px 12px;font-size:11px;color:var(--muted);cursor:pointer;
+  font-family:inherit;display:flex;align-items:center;gap:5px;margin-top:6px;
+  transition:all 0.15s;width:100%;}
+.foto-btn:hover{border-color:var(--g500);color:var(--g600);}
+.foto-btn.has-foto{border-style:solid;border-color:#a5d6a7;background:#f1f8e9;color:#1b5e20;}
+.foto-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+.foto-modal-ov.open{display:flex;}
+.foto-modal-img{max-width:92vw;max-height:70vh;border-radius:12px;object-fit:contain;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.foto-modal-info{color:rgba(255,255,255,0.75);font-size:12px;text-align:center;line-height:1.5;}
+.foto-modal-close{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+  color:#fff;border-radius:22px;padding:10px 24px;font-family:inherit;font-size:13px;cursor:pointer;}
+.foto-modal-del{background:rgba(198,40,40,0.2);border:1px solid rgba(198,40,40,0.4);
+  color:#ff6b6b;border-radius:22px;padding:10px 24px;font-family:inherit;font-size:13px;cursor:pointer;}
+.foto-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.foto-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;cursor:pointer;
+  border:2px solid #a5d6a7;transition:transform 0.15s;}
+.foto-thumb:hover{transform:scale(1.05);}
+.upload-progress{height:4px;background:#e0e0e0;border-radius:2px;margin-top:6px;overflow:hidden;display:none;}
+.upload-progress-bar{height:100%;background:linear-gradient(90deg,#388e3c,#66bb6a);
+  border-radius:2px;transition:width 0.3s;width:0%;}
+
 /* LOADING */
 .loading-overlay{position:fixed;inset:0;background:rgba(13,43,13,0.85);z-index:600;
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
@@ -758,7 +784,7 @@ function renderFarmerJadwal(){
       '<button class="check-btn'+(t.done?' checked':'')+'" onclick="farmerToggleDone(\''+t.key+'\')">'+
       (t.done?'✓':'')+'</button>'+
       '<div class="sic">'+t.icon+'</div>'+
-      '<div class="sb2">'+
+      '<div class="sb2" id="sb_'+t.dbKey+'">'+
       '<div class="st">'+t.task+'</div>'+
       '<div class="sbl">ℹ️ '+t.znote+'</div>'+
       (t.done?'<div class="done-stamp">✅ Sudah dikerjakan</div>':'')+
@@ -982,6 +1008,7 @@ function renderJadwal(){
       '<div class="sic">'+t.icon+'</div>'+
       '<div class="sb2"><div class="st">'+t.task+'</div><div class="sbl">ℹ️ '+t.znote+'</div>'+
       (t.done?'<div class="done-stamp">✅ Sudah dikerjakan</div>':'')+
+      (t.done?'<button class="foto-btn has-foto" onclick="ownerViewFoto(\''+t.key+'\',\''+currentUser.uid+'\',this)" style="margin-top:5px;width:auto;padding:5px 10px;font-size:10.5px;">🖼️ Lihat Foto Bukti</button>':'')+
       '</div>'+
       '<div class="sd"><div class="sd-main'+(od?' overdue':'')+'">'+fmtDate(t.targetDate)+'</div>'+
       '<div class="sd-rel'+(od?' overdue':'')+'">'+relDay(t.targetDate)+'</div></div></div>';
@@ -1171,6 +1198,222 @@ async function simpanEdit(){
     hideLoading();closeEdit();
     toast('✅ Blok "'+nama+'" berhasil diperbarui!');
   }catch(e){hideLoading();toast('❌ Gagal update: '+e.message);}
+}
+
+
+// ══════════════════════════════════════
+// FOTO BUKTI KERJA
+// ══════════════════════════════════════
+
+// Compress image using canvas
+function compressImage(file, maxW, maxH, quality) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        // Scale down
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressed);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Sanitize key for Firebase
+function safeKey(str) {
+  return str.replace(/[.#$\[\]|/]/g, '_');
+}
+
+// Upload foto (compress → save to Realtime DB as base64)
+async function uploadFoto(taskKey, ownerId, file, onProgress) {
+  onProgress && onProgress(20);
+  // Compress to max 800x800, quality 0.65 → ~80-150KB
+  const compressed = await compressImage(file, 800, 800, 0.65);
+  onProgress && onProgress(60);
+  // Check size
+  const sizeKB = Math.round(compressed.length * 0.75 / 1024);
+  if (sizeKB > 400) {
+    // Extra compress if still too big
+    const recompressed = await compressImage(file, 600, 600, 0.5);
+    onProgress && onProgress(80);
+    const safeTaskKey = safeKey(taskKey);
+    await db.ref('foto/' + ownerId + '/' + safeTaskKey).set({
+      data: recompressed,
+      uploadedAt: Date.now(),
+      sizeKB: Math.round(recompressed.length * 0.75 / 1024)
+    });
+  } else {
+    const safeTaskKey = safeKey(taskKey);
+    await db.ref('foto/' + ownerId + '/' + safeTaskKey).set({
+      data: compressed,
+      uploadedAt: Date.now(),
+      sizeKB
+    });
+  }
+  onProgress && onProgress(100);
+}
+
+// Get foto for a task
+async function getFoto(taskKey, ownerId) {
+  const safeTaskKey = safeKey(taskKey);
+  const snap = await db.ref('foto/' + ownerId + '/' + safeTaskKey).once('value');
+  return snap.exists() ? snap.val() : null;
+}
+
+// Delete foto
+async function deleteFoto(taskKey, ownerId) {
+  const safeTaskKey = safeKey(taskKey);
+  await db.ref('foto/' + ownerId + '/' + safeTaskKey).remove();
+}
+
+// Farmer: tap camera button
+function farmerTapFoto(taskKey, ownerId, btnEl) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment'; // open camera directly on mobile
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // Show progress
+    const progWrap = btnEl.parentElement.querySelector('.upload-progress');
+    const progBar = btnEl.parentElement.querySelector('.upload-progress-bar');
+    if (progWrap) { progWrap.style.display = 'block'; progBar.style.width = '0%'; }
+    btnEl.textContent = '📤 Mengunggah foto...';
+    btnEl.disabled = true;
+    try {
+      await uploadFoto(taskKey, ownerId, file, (pct) => {
+        if (progBar) progBar.style.width = pct + '%';
+      });
+      // Mark task done automatically
+      if (!doneMap[taskKey]) {
+        const ref = db.ref('done/' + ownerId + '/' + safeKey(taskKey));
+        await ref.set(true);
+      }
+      if (progWrap) progWrap.style.display = 'none';
+      toast('✅ Foto berhasil diunggah & tugas ditandai selesai!');
+      renderFarmerJadwal();
+    } catch(err) {
+      btnEl.disabled = false;
+      btnEl.textContent = '📷 Ambil Foto Bukti';
+      if (progWrap) progWrap.style.display = 'none';
+      toast('❌ Gagal upload: ' + err.message);
+    }
+  };
+  input.click();
+}
+
+// View foto (owner & farmer)
+function viewFoto(src, info) {
+  let ov = document.getElementById('fotoModalOv');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'fotoModalOv';
+    ov.className = 'foto-modal-ov';
+    ov.innerHTML =
+      '<img id="fotoModalImg" class="foto-modal-img" src="" alt="Bukti Kerja">'+
+      '<div id="fotoModalInfo" class="foto-modal-info"></div>'+
+      '<div style="display:flex;gap:10px;">'+
+      '<button class="foto-modal-close" onclick="closeFotoModal()">✕ Tutup</button>'+
+      '<button class="foto-modal-del" id="fotoModalDel" style="display:none">🗑️ Hapus Foto</button>'+
+      '</div>';
+    ov.addEventListener('click', (e) => { if(e.target===ov) closeFotoModal(); });
+    document.body.appendChild(ov);
+  }
+  document.getElementById('fotoModalImg').src = src;
+  document.getElementById('fotoModalInfo').textContent = info || '';
+  document.getElementById('fotoModalDel').style.display = 'none';
+  ov.classList.add('open');
+}
+
+function closeFotoModal() {
+  const ov = document.getElementById('fotoModalOv');
+  if (ov) ov.classList.remove('open');
+}
+
+// Render foto button for farmer task item
+async function renderFotoBtnFarmer(taskKey, ownerId, container) {
+  const foto = await getFoto(taskKey, ownerId);
+  const existing = container.querySelector('.foto-area');
+  if (existing) existing.remove();
+
+  const area = document.createElement('div');
+  area.className = 'foto-area';
+
+  if (foto) {
+    // Show thumbnail
+    const d = new Date(foto.uploadedAt);
+    const timeStr = d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    area.innerHTML =
+      '<div class="foto-row">'+
+      '<img class="foto-thumb" src="'+foto.data+'" alt="Bukti" onclick="viewFoto(''+foto.data+'','Diunggah: '+timeStr+' · '+foto.sizeKB+' KB')">'+
+      '<div style="font-size:10px;color:#388e3c;align-self:center;">✅ Foto bukti tersimpan<br><span style="color:var(--muted);">'+timeStr+'</span></div>'+
+      '</div>';
+  } else {
+    const btn = document.createElement('button');
+    btn.className = 'foto-btn';
+    btn.innerHTML = '📷 Ambil Foto Bukti Kerja';
+    btn.onclick = () => farmerTapFoto(taskKey, ownerId, btn);
+    const prog = document.createElement('div');
+    prog.className = 'upload-progress';
+    prog.innerHTML = '<div class="upload-progress-bar"></div>';
+    area.appendChild(btn);
+    area.appendChild(prog);
+  }
+  container.appendChild(area);
+}
+
+// Owner: view foto on task card
+async function ownerViewFoto(taskKey, ownerId, btnEl) {
+  btnEl.textContent = '⏳ Memuat...';
+  try {
+    const foto = await getFoto(taskKey, ownerId);
+    if (!foto) {
+      btnEl.textContent = '📷 Belum ada foto';
+      return;
+    }
+    const d = new Date(foto.uploadedAt);
+    const timeStr = d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    // Show delete option for owner
+    const ov = document.getElementById('fotoModalOv') || (() => {
+      const el = document.createElement('div');
+      el.id = 'fotoModalOv'; el.className = 'foto-modal-ov';
+      el.innerHTML = '<img id="fotoModalImg" class="foto-modal-img" src="" alt="Bukti Kerja">'+
+        '<div id="fotoModalInfo" class="foto-modal-info"></div>'+
+        '<div style="display:flex;gap:10px;">'+
+        '<button class="foto-modal-close" onclick="closeFotoModal()">✕ Tutup</button>'+
+        '<button class="foto-modal-del" id="fotoModalDel">🗑️ Hapus Foto</button>'+
+        '</div>';
+      el.addEventListener('click',(e)=>{if(e.target===el)closeFotoModal();});
+      document.body.appendChild(el); return el;
+    })();
+    document.getElementById('fotoModalImg').src = foto.data;
+    document.getElementById('fotoModalInfo').textContent = 'Diunggah: '+timeStr+' · '+foto.sizeKB+' KB';
+    const delBtn = document.getElementById('fotoModalDel');
+    delBtn.style.display = 'inline-block';
+    delBtn.onclick = async () => {
+      if(!confirm('Hapus foto ini?')) return;
+      await deleteFoto(taskKey, ownerId);
+      closeFotoModal();
+      btnEl.textContent = '📷 Belum ada foto';
+      toast('🗑️ Foto berhasil dihapus.');
+    };
+    ov.classList.add('open');
+    btnEl.textContent = '🖼️ Lihat Foto Bukti';
+  } catch(e) {
+    btnEl.textContent = '❌ Gagal memuat';
+    toast('Error: '+e.message);
+  }
 }
 
 // Init
