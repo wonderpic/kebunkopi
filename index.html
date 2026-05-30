@@ -622,9 +622,22 @@ function showLoading(txt){
 // AUTH
 // ══════════════════════════════════════
 function loginOwner(){
-  showLoading('Menghubungkan ke Google...');
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e=>{hideLoading();toast('❌ Login gagal: '+e.message);});
+  try {
+    showLoading('Menghubungkan ke Google...');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then(result => {
+        hideLoading();
+      })
+      .catch(e => {
+        hideLoading();
+        alert('Login error: ' + e.code + ' - ' + e.message);
+        toast('❌ Login gagal: '+e.message);
+      });
+  } catch(e) {
+    hideLoading();
+    alert('Critical error: ' + e.message);
+  }
 }
 
 function showKodeScreen(){
