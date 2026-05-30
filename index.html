@@ -30,11 +30,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
 
 /* NAV */
 .nav{background:rgba(255,255,255,0.97);display:flex;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(46,125,50,0.12);}
-.nb{flex:1;padding:11px 2px 10px;background:none;border:none;cursor:pointer;font-family:inherit;
-  font-size:9px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;
-  border-bottom:3px solid transparent;transition:all 0.2s;}
-.nb .ic{font-size:18px;}
+.nb{flex:1;padding:10px 2px 9px;background:none;border:none;cursor:pointer;font-family:inherit;
+  font-size:8.5px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;
+  border-bottom:3px solid transparent;transition:all 0.22s;position:relative;}
+.nb .ic{display:flex;align-items:center;justify-content:center;width:36px;height:28px;border-radius:8px;
+  transition:all 0.22s;background:transparent;}
+.nb .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;transition:all 0.22s;}
+.nb.active .ic{background:rgba(46,125,50,0.1);}
+.nb.active .ic svg{stroke:var(--g600);stroke-width:2;}
 .nb.active{color:var(--g600);border-bottom-color:var(--g500);font-weight:700;}
+.nb:hover:not(.active) .ic{background:rgba(46,125,50,0.06);}
 
 /* CONTENT */
 .cnt{flex:1;padding:14px 12px 80px;}
@@ -215,10 +221,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
     <div class="app-sub">Asisten Digital Perawatan Kebun Kopi</div>
   </div>
   <nav class="nav">
-    <button class="nb active" data-tab="kebun" onclick="switchTab('kebun')"><span class="ic">🏡</span>Data Kebun</button>
-    <button class="nb" data-tab="jadwal" onclick="switchTab('jadwal')"><span class="ic">📅</span>Jadwal Kerja</button>
-    <button class="nb" data-tab="status" onclick="switchTab('status')"><span class="ic">📊</span>Status Kebun</button>
-    <button class="nb" data-tab="tambah" onclick="switchTab('tambah')"><span class="ic">➕</span>Tambah Blok</button>
+    <button class="nb active" data-tab="kebun" onclick="switchTab('kebun')">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8 2 4 5.5 4 10c0 3 1.5 5.5 4 7v2a1 1 0 001 1h6a1 1 0 001-1v-2c2.5-1.5 4-4 4-7 0-4.5-4-8-8-8z"/><path d="M9 21h6"/><line x1="12" y1="2" x2="12" y2="10"/><path d="M8 7c1 1.5 2.5 2.5 4 3"/></svg>
+      </span>Data Kebun</button>
+    <button class="nb" data-tab="jadwal" onclick="switchTab('jadwal')">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>
+      </span>Jadwal Kerja</button>
+    <button class="nb" data-tab="status" onclick="switchTab('status')">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 4-6"/><circle cx="7" cy="16" r="1.2" fill="currentColor"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/><circle cx="15" cy="14" r="1.2" fill="currentColor"/><circle cx="19" cy="8" r="1.2" fill="currentColor"/></svg>
+      </span>Status Kebun</button>
+    <button class="nb" data-tab="tambah" onclick="switchTab('tambah')">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </span>Tambah Blok</button>
   </nav>
   <div class="cnt">
 
