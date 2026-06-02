@@ -268,8 +268,24 @@ function loginOwner(){
   showLoad('Menghubungkan ke Google...');
   const provider=new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider)
-    .then(()=>hideLoad())
-    .catch(e=>{ hideLoad(); toast('❌ '+e.message); });
+    .then(result=>{ hideLoad(); console.log('Login OK:', result.user.email); })
+    .catch(e=>{
+      hideLoad();
+      console.error('Login error:', e.code, e.message);
+      // Show specific error messages
+      if(e.code==='auth/unauthorized-domain'){
+        alert('Domain belum diizinkan di Firebase.
+
+Buka Firebase Console → Authentication → Settings → Authorized Domains → Add domain:
+wonderpic.github.io');
+      } else if(e.code==='auth/popup-blocked'){
+        toast('⚠️ Popup diblokir browser. Izinkan popup untuk site ini.');
+      } else if(e.code==='auth/popup-closed-by-user'){
+        toast('Login dibatalkan.');
+      } else {
+        toast('❌ '+e.code+': '+e.message);
+      }
+    });
 }
 function showKodeScreen(){
   document.getElementById('modeSelector').style.display='none';
@@ -320,6 +336,7 @@ auth.onAuthStateChanged(async user=>{
     hideLoad();
   } else if(user){
     currentUser=user; currentRole='owner';
+    console.log('Auth state: owner logged in', user.email);
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('ownerApp').style.cssText='display:flex;flex-direction:column;';
     // Set owner name & avatar
