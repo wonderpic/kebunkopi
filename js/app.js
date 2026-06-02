@@ -265,27 +265,13 @@ document.getElementById('e_mdpl').addEventListener('input', function(){ prevZona
 
 // ── AUTH ──────────────────────────────────────────────
 function loginOwner(){
-  showLoad('Menghubungkan ke Google...');
-  const provider=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-    .then(result=>{ hideLoad(); console.log('Login OK:', result.user.email); })
-    .catch(e=>{
-      hideLoad();
-      console.error('Login error:', e.code, e.message);
-      // Show specific error messages
-      if(e.code==='auth/unauthorized-domain'){
-        alert('Domain belum diizinkan di Firebase.
-
-Buka Firebase Console → Authentication → Settings → Authorized Domains → Add domain:
-wonderpic.github.io');
-      } else if(e.code==='auth/popup-blocked'){
-        toast('⚠️ Popup diblokir browser. Izinkan popup untuk site ini.');
-      } else if(e.code==='auth/popup-closed-by-user'){
-        toast('Login dibatalkan.');
-      } else {
-        toast('❌ '+e.code+': '+e.message);
-      }
-    });
+  showLoad('Mengarahkan ke Google...');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider).catch(e=>{
+    hideLoad();
+    console.error('Redirect error:', e.code, e.message);
+    toast('❌ '+e.message);
+  });
 }
 function showKodeScreen(){
   document.getElementById('modeSelector').style.display='none';
@@ -333,6 +319,20 @@ setTimeout(()=>{
     if(!savedId) document.getElementById('loginScreen').style.display='flex';
   }
 }, 8000);
+
+// Handle redirect result first (from signInWithRedirect)
+auth.getRedirectResult().then(result=>{
+  if(result && result.user){
+    console.log('Redirect result: logged in as', result.user.email);
+    // onAuthStateChanged will handle the rest
+  }
+}).catch(e=>{
+  console.error('Redirect result error:', e.code, e.message);
+  if(e.code && e.code !== 'auth/no-current-user'){
+    hideLoad();
+    toast('❌ Login gagal: '+e.message);
+  }
+});
 
 auth.onAuthStateChanged(async user=>{
   console.log('onAuthStateChanged fired, user:', user ? user.email : 'null');
