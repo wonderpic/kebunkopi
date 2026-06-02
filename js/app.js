@@ -321,37 +321,63 @@ function doLogout(){
 }
 
 // ── AUTH STATE ────────────────────────────────────────
-setTimeout(()=>{ if(document.getElementById('loadingOverlay').style.display==='flex') hideLoad(); }, 5000);
+let authResolved = false;
+
+// Timeout fallback - max 8 seconds
+setTimeout(()=>{
+  if(!authResolved){
+    authResolved = true;
+    hideLoad();
+    // Check farmer session
+    const savedId=localStorage.getItem('farmer_blok_id');
+    if(!savedId) document.getElementById('loginScreen').style.display='flex';
+  }
+}, 8000);
 
 auth.onAuthStateChanged(async user=>{
-  const savedId=localStorage.getItem('farmer_blok_id');
-  const savedKode=localStorage.getItem('farmer_kode');
-  if(!user&&savedId&&savedKode){
-    showLoad('Memuat kebun...');
-    try{
-      const snap=await db.ref('bloks/'+savedId).once('value');
-      if(snap.exists()){ const b=snap.val(); b.id=savedId; hideLoad(); enterFarmerMode(b); return; }
-    }catch(e){}
-    localStorage.removeItem('farmer_blok_id'); localStorage.removeItem('farmer_kode');
-    hideLoad();
-  } else if(user){
+  console.log('onAuthStateChanged fired, user:', user ? user.email : 'null');
+
+  if(user){
+    // Owner logged in
+    authResolved = true;
     currentUser=user; currentRole='owner';
-    console.log('Auth state: owner logged in', user.email);
     document.getElementById('loginScreen').style.display='none';
+    document.getElementById('farmerApp').style.display='none';
     document.getElementById('ownerApp').style.cssText='display:flex;flex-direction:column;';
-    // Set owner name & avatar
     document.getElementById('ownerName').textContent=user.displayName||user.email;
     if(user.photoURL){
-      const av=document.getElementById('ownerAvatar');
-      av.innerHTML=`<img src="${user.photoURL}" alt="avatar">`;
+      document.getElementById('ownerAvatar').innerHTML='<img src="'+user.photoURL+'" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
     } else {
       document.getElementById('ownerAvatar').textContent=(user.displayName||'U')[0].toUpperCase();
     }
-    hideLoad(); listenBloks();
-  } else {
     hideLoad();
-    document.getElementById('loginScreen').style.display='flex';
+    listenBloks();
+    return;
   }
+
+  // No logged in user — check farmer session
+  const savedId=localStorage.getItem('farmer_blok_id');
+  const savedKode=localStorage.getItem('farmer_kode');
+
+  if(savedId && savedKode){
+    showLoad('Memuat kebun...');
+    try{
+      const snap=await db.ref('bloks/'+savedId).once('value');
+      if(snap.exists()){
+        const b=snap.val(); b.id=savedId;
+        authResolved=true; hideLoad(); enterFarmerMode(b); return;
+      }
+    }catch(e){ console.log('Farmer load error:', e); }
+    localStorage.removeItem('farmer_blok_id');
+    localStorage.removeItem('farmer_kode');
+  }
+
+  // Show login screen
+  authResolved = true;
+  hideLoad();
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('ownerApp').style.display='none';
+  document.getElementById('farmerApp').style.display='none';
 });
 
 // ── FIREBASE LISTENERS ────────────────────────────────
