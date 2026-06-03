@@ -297,12 +297,19 @@ async function masukKode(){
     hideLoad(); enterFarmerMode(blok);
   }catch(e){ hideLoad(); toast('❌ '+e.message); }
 }
-function doLogout(){
-  if(currentRole==='owner') auth.signOut();
-  else{
+async function doLogout(){
+  // Clear service worker cache to prevent stale state
+  if('caches' in window){
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  }
+  if(currentRole==='owner'){
+    await auth.signOut();
+    location.href = location.href.split('?')[0]; // hard navigate
+  } else {
     localStorage.removeItem('farmer_blok_id');
     localStorage.removeItem('farmer_kode');
-    location.reload();
+    location.href = location.href.split('?')[0];
   }
 }
 
@@ -337,13 +344,15 @@ auth.getRedirectResult().then(result=>{
 auth.onAuthStateChanged(async user=>{
   console.log('onAuthStateChanged fired, user:', user ? user.email : 'null');
 
+  // Always reset all views first
+  document.getElementById('ownerApp').style.display='none';
+  document.getElementById('farmerApp').style.display='none';
+
   if(user){
     // Owner logged in
     authResolved = true;
     currentUser=user; currentRole='owner';
     document.getElementById('loginScreen').style.display='none';
-    document.getElementById('farmerApp').style.display='none';
-    document.getElementById('ownerApp').style.cssText='display:flex;flex-direction:column;';
     document.getElementById('ownerName').textContent=user.displayName||user.email;
     if(user.photoURL){
       document.getElementById('ownerAvatar').innerHTML='<img src="'+user.photoURL+'" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
