@@ -349,6 +349,8 @@ auth.onAuthStateChanged(async user=>{
     authResolved = true;
     currentUser=user; currentRole='owner';
     document.getElementById('loginScreen').style.display='none';
+    document.getElementById('farmerApp').style.display='none';
+    document.getElementById('ownerApp').style.cssText='display:flex;flex-direction:column;min-height:100vh;';
     document.getElementById('ownerName').textContent=user.displayName||user.email;
     if(user.photoURL){
       document.getElementById('ownerAvatar').innerHTML='<img src="'+user.photoURL+'" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
