@@ -266,8 +266,9 @@ document.getElementById('e_mdpl').addEventListener('input', function(){ prevZona
 // ── AUTH ──────────────────────────────────────────────
 function loginOwner(){
   showLoad('Menghubungkan ke Google...');
-  // Set persistence to LOCAL so auth survives page refresh
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
+  // SESSION persistence: auth only valid in this browser tab
+  // Prevents other devices from accessing when URL is shared
+  auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
     const provider = new firebase.auth.GoogleAuthProvider();
     return auth.signInWithPopup(provider);
   }).then(result=>{
@@ -635,17 +636,145 @@ function openCoverModal(blok){
   modal.classList.add('open');
 }
 
-function shareCover(){
-  // Use Web Share API if available, otherwise instruct screenshot
-  const shareData={
-    title: 'Kebun Kopi Saya — KopiPlanPro',
-    text: 'Pantau kebun kopi saya di Talaga Hangsa KopiPlanPro! 🌿☕',
-    url: window.location.href
-  };
-  if(navigator.share){
-    navigator.share(shareData).catch(()=>{});
-  } else {
-    toast('📸 Screenshot halaman ini untuk dishare ke medsos!');
+async function shareCover(){
+  // Generate cover as image using Canvas then share
+  const modal = document.getElementById('coverModal');
+  const card = modal.querySelector('.cover-card');
+  if(!card){ toast('❌ Cover tidak ditemukan'); return; }
+
+  try {
+    showLoad('Membuat gambar cover...');
+    // Use html2canvas-like approach with SVG foreignObject
+    const cardRect = card.getBoundingClientRect();
+    const w = Math.round(cardRect.width);
+    const h = Math.round(cardRect.height);
+
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    const scale = 2; // retina
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // Draw background
+    ctx.fillStyle = '#0e1a0e';
+    ctx.roundRect(0, 0, w, h, 20);
+    ctx.fill();
+
+    // Draw cover photo if exists
+    const coverImg = card.querySelector('.cover-card-photo img');
+    if(coverImg && coverImg.src && coverImg.src.length > 100){
+      try{
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=coverImg.src; });
+        const photoH = 200;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(0, 0, w, photoH+20, [20,20,0,0]);
+        ctx.clip();
+        ctx.drawImage(img, 0, 0, w, photoH);
+        ctx.restore();
+        // Gradient overlay on photo
+        const grad = ctx.createLinearGradient(0, photoH-60, 0, photoH+20);
+        grad.addColorStop(0, 'rgba(14,26,14,0)');
+        grad.addColorStop(1, 'rgba(14,26,14,0.9)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, photoH-60, w, 80);
+      }catch(e){ console.log('cover img err',e); }
+    } else {
+      // No photo - draw gradient placeholder
+      const grad = ctx.createLinearGradient(0,0,w,200);
+      grad.addColorStop(0,'#1b5e20'); grad.addColorStop(1,'#2d6a2d');
+      ctx.fillStyle=grad; ctx.fillRect(0,0,w,200);
+      ctx.fillStyle='rgba(255,255,255,0.15)';
+      ctx.font='48px serif'; ctx.textAlign='center';
+      ctx.fillText('☕',w/2,120);
+    }
+
+    // Draw card body
+    const bodyY = 210;
+    // Name
+    ctx.fillStyle = '#e8f0e8';
+    ctx.font = 'bold 20px serif';
+    ctx.textAlign = 'left';
+    const nameEl = document.getElementById('coverCardName');
+    ctx.fillText(nameEl?.textContent||'', 20, bodyY+20);
+    // Sub
+    ctx.fillStyle = 'rgba(232,240,232,0.55)';
+    ctx.font = '11px sans-serif';
+    const subEl = document.getElementById('coverCardSub');
+    ctx.fillText(subEl?.textContent||'', 20, bodyY+38);
+    // Stats
+    const statEls = card.querySelectorAll('.cover-stat');
+    const statW = (w-40)/Math.max(statEls.length,1);
+    statEls.forEach((st,i)=>{
+      const x = 20 + i*statW + statW/2;
+      ctx.fillStyle='rgba(255,255,255,0.04)';
+      ctx.beginPath();
+      ctx.roundRect(20+i*statW, bodyY+50, statW-8, 56, 8);
+      ctx.fill();
+      ctx.fillStyle='#e8f0e8'; ctx.font='bold 18px sans-serif'; ctx.textAlign='center';
+      const num=st.querySelector('.cover-stat-num');
+      ctx.fillText(num?.textContent||'', x, bodyY+76);
+      ctx.fillStyle='rgba(232,240,232,0.4)'; ctx.font='8px sans-serif';
+      const lbl=st.querySelector('.cover-stat-lbl');
+      ctx.fillText((lbl?.textContent||'').toUpperCase(), x, bodyY+94);
+    });
+    // Progress
+    const pctEl = document.getElementById('coverProgressPct');
+    const pctText = pctEl?.textContent||'';
+    ctx.fillStyle='rgba(74,222,128,0.08)';
+    ctx.beginPath(); ctx.roundRect(20,bodyY+118,w-40,44,10); ctx.fill();
+    ctx.fillStyle='#4ade80'; ctx.font='bold 16px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('📊 '+pctText, 32, bodyY+145);
+    // Badges
+    const badgeEls = card.querySelectorAll('.cover-badge');
+    let bx=20, by=bodyY+176;
+    ctx.font='bold 9px sans-serif';
+    badgeEls.forEach(b=>{
+      const txt=b.textContent||'';
+      const tw=ctx.measureText(txt).width+16;
+      ctx.fillStyle='rgba(74,222,128,0.1)';
+      ctx.beginPath(); ctx.roundRect(bx,by,tw,20,99); ctx.fill();
+      ctx.fillStyle='#4ade80'; ctx.textAlign='left';
+      ctx.fillText(txt,bx+8,by+14);
+      bx+=tw+6;
+    });
+    // Branding bottom
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    ctx.fillRect(20,h-36,w-40,1);
+    ctx.fillStyle='rgba(232,240,232,0.3)'; ctx.font='11px serif'; ctx.textAlign='left';
+    ctx.fillText('Talaga Hangsa KopiPlanPro', 20, h-16);
+    ctx.fillStyle='rgba(232,240,232,0.2)'; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText('wonderpic.github.io/kebunkopi', w-20, h-16);
+
+    hideLoad();
+
+    // Share as image
+    canvas.toBlob(async blob=>{
+      if(!blob){ toast('❌ Gagal buat gambar'); return; }
+      const file = new File([blob],'kebun-kopi.png',{type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({
+          files:[file],
+          title:'Kebun Kopi Saya — KopiPlanPro',
+          text:'Kebun kopi saya 🌿☕ #TalagaHangsa #KopiPlanPro'
+        });
+      } else {
+        // Fallback: download image
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='cover-kebun-kopi.png';
+        a.click();
+        toast('📥 Gambar didownload! Share ke medsos dari galeri.');
+      }
+    },'image/png',0.95);
+  } catch(err){
+    hideLoad();
+    console.error('Share error:', err);
+    toast('📸 Screenshot halaman ini untuk dishare!');
   }
 }
 
@@ -751,15 +880,27 @@ function renderKebun(){
     const pct=total?Math.round(done/total*100):0;
     const overdue=tasks.filter(t=>t.targetDate<today&&!t.done).length;
     const col=pct>=75?'var(--owner-green)':pct>=40?'var(--owner-amber)':'var(--owner-red)';
-    return `<div class="o-card">
-      <div class="o-card-hdr">
-        <div class="o-card-title">🏡 ${blok.nama}</div>
-        <div class="o-cbtn">
-          <button class="o-ebt" data-id="${blok.id}" type="button">✏️</button>
-          <button class="o-dbt" data-id="${blok.id}" type="button">🗑️</button>
+    return `<div class="o-card" style="padding:0;overflow:hidden;">
+      <div class="o-cover-wrap" id="cover_${blok.id}" style="height:140px;position:relative;background:linear-gradient(135deg,#162016,#1b3a1b);cursor:pointer;" onclick="openCoverModal(bloks.find(b=>b.id==='${blok.id}'))">
+        <img id="coverimg_${blok.id}" src="" style="width:100%;height:100%;object-fit:cover;display:none;opacity:0;transition:opacity 0.3s;">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.65) 100%);"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:10px 14px;display:flex;align-items:flex-end;justify-content:space-between;">
+          <div>
+            <div style="font-family:var(--font-serif);font-size:16px;color:#fff;line-height:1.2;">${blok.nama}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-top:2px;">📍 ${blok.lokasi} · ⛰️ ${parseInt(blok.mdpl).toLocaleString('id-ID')} mdpl</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+            <div class="zona-badge ${z.cls}" style="margin:0;">${z.icon} ${z.label.split(' ').slice(0,2).join(' ')}</div>
+            <div style="font-size:11px;font-weight:700;color:${col};">${pct}% selesai</div>
+          </div>
         </div>
+        <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;">
+          <button class="o-ebt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);" onclick="event.stopPropagation()">✏️</button>
+          <button class="o-dbt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.3);border-color:rgba(248,113,113,0.3);color:#f87171;" onclick="event.stopPropagation()">🗑️</button>
+        </div>
+        <div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,0.3);border:1px dashed rgba(255,255,255,0.2);border-radius:7px;padding:4px 8px;font-size:9.5px;color:rgba(255,255,255,0.6);">📷 Tap untuk edit cover</div>
       </div>
-      <div class="zona-badge ${z.cls}">${z.icon} ${z.label}</div>
+      <div style="padding:12px 14px;">
       <div id="wb_${blok.id}" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--owner-text2);">
         <span class="weather-loading">📡 Memuat cuaca...</span>
       </div>
@@ -782,7 +923,6 @@ function renderKebun(){
           <span>${blok.kode}</span>
           <span style="font-size:9px;opacity:0.6;">📋</span>
         </div>
-        <button class="cover-preview-btn" data-id="${blok.id}" type="button">🖼️ Cover Page</button>
       </div>
     </div>`;
   }).join('');
@@ -793,10 +933,19 @@ function renderKebun(){
     if(navigator.clipboard)navigator.clipboard.writeText(btn.dataset.kode);
     toast('📋 Kode "'+btn.dataset.kode+'" disalin!');
   }));
-  document.querySelectorAll('.cover-preview-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    const blok=bloks.find(b=>b.id===btn.dataset.id);
-    if(blok) openCoverModal(blok);
-  }));
+  // Load cover photos async per blok
+  bloks.forEach(blok=>{
+    db.ref('covers/'+blok.id).once('value').then(snap=>{
+      if(snap.exists()){
+        const img=document.getElementById('coverimg_'+blok.id);
+        if(img){
+          img.src=snap.val().data;
+          img.style.display='block';
+          img.onload=()=>{ img.style.opacity='1'; };
+        }
+      }
+    }).catch(()=>{});
+  });
   // Load weather async per blok
   bloks.forEach(blok=>{
     loadWeatherForBlok(blok,'wb_'+blok.id,'wr_'+blok.id);
