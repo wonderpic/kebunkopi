@@ -265,12 +265,22 @@ document.getElementById('e_mdpl').addEventListener('input', function(){ prevZona
 
 // ── AUTH ──────────────────────────────────────────────
 function loginOwner(){
-  showLoad('Mengarahkan ke Google...');
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider).catch(e=>{
+  showLoad('Menghubungkan ke Google...');
+  // Set persistence to LOCAL so auth survives page refresh
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
+    const provider = new firebase.auth.GoogleAuthProvider();
+    return auth.signInWithPopup(provider);
+  }).then(result=>{
+    console.log('Login OK:', result.user.email);
     hideLoad();
-    console.error('Redirect error:', e.code, e.message);
-    toast('❌ '+e.message);
+  }).catch(e=>{
+    hideLoad();
+    console.error('Login error:', e.code, e.message);
+    if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'){
+      toast('Login dibatalkan.');
+    } else {
+      toast('❌ '+e.message);
+    }
   });
 }
 function showKodeScreen(){
@@ -326,20 +336,6 @@ setTimeout(()=>{
     if(!savedId) document.getElementById('loginScreen').style.display='flex';
   }
 }, 8000);
-
-// Handle redirect result first (from signInWithRedirect)
-auth.getRedirectResult().then(result=>{
-  if(result && result.user){
-    console.log('Redirect result: logged in as', result.user.email);
-    // onAuthStateChanged will handle the rest
-  }
-}).catch(e=>{
-  console.error('Redirect result error:', e.code, e.message);
-  if(e.code && e.code !== 'auth/no-current-user'){
-    hideLoad();
-    toast('❌ Login gagal: '+e.message);
-  }
-});
 
 auth.onAuthStateChanged(async user=>{
   console.log('onAuthStateChanged fired, user:', user ? user.email : 'null');
