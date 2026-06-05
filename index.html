@@ -140,7 +140,14 @@
       <div class="o-fcard">
         <div class="o-fg"><label class="o-fl">Nama Blok</label><input class="o-fi" id="f_nama" type="text" placeholder="cth: Blok Utara A"></div>
         <div class="o-fr">
-          <div class="o-fg"><label class="o-fl">Lokasi (Kota)</label><input class="o-fi" id="f_lokasi" type="text" placeholder="cth: Bandung"></div>
+          <div class="o-fg"><label class="o-fl">Lokasi (Kota)</label>
+            <input class="o-fi" id="f_lokasi" type="text" placeholder="cth: Bandung">
+            <button type="button" id="btnDetectGPS" style="margin-top:6px;width:100%;padding:8px 12px;border:1px solid rgba(74,222,128,0.3);border-radius:9px;background:rgba(74,222,128,0.05);color:var(--owner-text2);font-family:inherit;font-size:11.5px;cursor:pointer;display:flex;align-items:center;gap:7px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg>
+              📍 Deteksi GPS Otomatis
+            </button>
+            <div id="f_gps_info" style="display:none;font-size:10.5px;margin-top:4px;padding:4px 8px;border-radius:6px;background:rgba(74,222,128,0.06);"></div>
+          </div>
           <div class="o-fg"><label class="o-fl">Ketinggian (mdpl)</label><input class="o-fi" id="f_mdpl" type="number" placeholder="1200" min="0" max="3000">
             <div class="o-zprev" id="zonaP"></div></div>
         </div>
@@ -230,7 +237,14 @@
     <input type="hidden" id="e_id">
     <div class="o-fg"><label class="o-fl">Nama Blok</label><input class="o-fi" id="e_nama" type="text"></div>
     <div class="o-fr">
-      <div class="o-fg"><label class="o-fl">Lokasi</label><input class="o-fi" id="e_lokasi" type="text"></div>
+      <div class="o-fg"><label class="o-fl">Lokasi</label>
+        <input class="o-fi" id="e_lokasi" type="text">
+        <button type="button" id="btnDetectGPSEdit" style="margin-top:6px;width:100%;padding:8px 12px;border:1px solid rgba(74,222,128,0.3);border-radius:9px;background:rgba(74,222,128,0.05);color:var(--owner-text2);font-family:inherit;font-size:11.5px;cursor:pointer;display:flex;align-items:center;gap:7px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg>
+          📍 Deteksi GPS Otomatis
+        </button>
+        <div id="e_gps_info" style="display:none;font-size:10.5px;margin-top:4px;padding:4px 8px;border-radius:6px;background:rgba(74,222,128,0.06);"></div>
+      </div>
       <div class="o-fg"><label class="o-fl">Ketinggian (mdpl)</label><input class="o-fi" id="e_mdpl" type="number" min="0" max="3000">
         <div class="o-zprev" id="zonaPE"></div></div>
     </div>
