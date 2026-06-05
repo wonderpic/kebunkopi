@@ -27,6 +27,8 @@ let selBlokId = null, selStatusId = null;
 let pendingDoneKey = null, pendingDoneOwnerId = null;
 let weatherCache = {}; // {lat_lon: {data, timestamp}}
 let farmerCoverUrl = null;
+let newBlokCoverData = null; // cover photo for new blok being added
+let editBlokCoverData = null; // cover photo for blok being edited
 const fS = { varietas:'Arabika', pupuk:'Organik', cuaca:'Kemarau' };
 const eS = { e_varietas:'Arabika', e_pupuk:'Organik', e_cuaca:'Kemarau' };
 
@@ -218,6 +220,46 @@ document.getElementById('btnMasukKode').addEventListener('click', masukKode);
 document.getElementById('btnLogout').addEventListener('click', doLogout);
 document.getElementById('btnFarmerLogout').addEventListener('click', doLogout);
 document.getElementById('btnTambah').addEventListener('click', tambahBlok);
+// Cover upload - Tambah form
+document.getElementById('btnAddCover').addEventListener('click',()=>document.getElementById('f_cover_input').click());
+document.getElementById('f_cover_input').addEventListener('change', async function(){
+  const file=this.files[0]; if(!file) return;
+  showLoad('Memproses foto cover...');
+  try{
+    newBlokCoverData=await compressImage(file,800,600,0.78);
+    const prev=document.getElementById('f_cover_preview');
+    document.getElementById('f_cover_img').src=newBlokCoverData;
+    prev.style.display='block';
+    document.getElementById('f_cover_label').textContent='✅ Foto cover dipilih';
+    hideLoad();
+  }catch(e){ hideLoad(); toast('❌ '+e.message); }
+});
+document.getElementById('btnRemoveCover').addEventListener('click',()=>{
+  newBlokCoverData=null;
+  document.getElementById('f_cover_preview').style.display='none';
+  document.getElementById('f_cover_label').textContent='Tambah Foto Cover Kebun';
+  document.getElementById('f_cover_input').value='';
+});
+// Cover upload - Edit modal
+document.getElementById('btnEditCover').addEventListener('click',()=>document.getElementById('e_cover_input').click());
+document.getElementById('e_cover_input').addEventListener('change', async function(){
+  const file=this.files[0]; if(!file) return;
+  showLoad('Memproses foto cover...');
+  try{
+    editBlokCoverData=await compressImage(file,800,600,0.78);
+    const prev=document.getElementById('e_cover_preview');
+    document.getElementById('e_cover_img').src=editBlokCoverData;
+    prev.style.display='block';
+    document.getElementById('e_cover_label').textContent='✅ Foto cover dipilih';
+    hideLoad();
+  }catch(e){ hideLoad(); toast('❌ '+e.message); }
+});
+document.getElementById('btnRemoveEditCover').addEventListener('click',()=>{
+  editBlokCoverData=null;
+  document.getElementById('e_cover_preview').style.display='none';
+  document.getElementById('e_cover_label').textContent='Ganti Foto Cover';
+  document.getElementById('e_cover_input').value='';
+});
 document.getElementById('btnSimpanEdit').addEventListener('click', simpanEdit);
 document.getElementById('btnBatalEdit').addEventListener('click', closeEdit);
 document.getElementById('editModal').addEventListener('click', e=>{ if(e.target===document.getElementById('editModal'))closeEdit(); });
@@ -273,6 +315,8 @@ function loginOwner(){
     return auth.signInWithPopup(provider);
   }).then(result=>{
     console.log('Login OK:', result.user.email);
+    // Set session token so this tab is authorized
+    sessionStorage.setItem('kpp_session', '1');
     hideLoad();
   }).catch(e=>{
     hideLoad();
@@ -309,14 +353,15 @@ async function masukKode(){
   }catch(e){ hideLoad(); toast('❌ '+e.message); }
 }
 async function doLogout(){
-  // Clear service worker cache to prevent stale state
+  // Clear session token and caches
+  sessionStorage.removeItem('kpp_session');
   if('caches' in window){
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
   }
   if(currentRole==='owner'){
     await auth.signOut();
-    location.href = location.href.split('?')[0]; // hard navigate
+    location.href = location.href.split('?')[0];
   } else {
     localStorage.removeItem('farmer_blok_id');
     localStorage.removeItem('farmer_kode');
@@ -344,6 +389,18 @@ auth.onAuthStateChanged(async user=>{
   // Always reset all views first
   document.getElementById('ownerApp').style.display='none';
   document.getElementById('farmerApp').style.display='none';
+
+  // Privacy: check session token - prevents shared URL from auto-login
+  // Token is set only when user explicitly logs in this tab
+  const sessionToken = sessionStorage.getItem('kpp_session');
+  if(user && !sessionToken){
+    console.log('No session token - logging out for privacy');
+    await auth.signOut();
+    document.getElementById('loginScreen').style.display='flex';
+    hideLoad();
+    authResolved = true;
+    return;
+  }
 
   if(user){
     // Owner logged in
@@ -881,12 +938,12 @@ function renderKebun(){
     const overdue=tasks.filter(t=>t.targetDate<today&&!t.done).length;
     const col=pct>=75?'var(--owner-green)':pct>=40?'var(--owner-amber)':'var(--owner-red)';
     return `<div class="o-card" style="padding:0;overflow:hidden;">
-      <div class="o-cover-wrap" id="cover_${blok.id}" style="height:140px;position:relative;background:linear-gradient(135deg,#162016,#1b3a1b);cursor:pointer;" onclick="openCoverModal(bloks.find(b=>b.id==='${blok.id}'))">
+      <div id="cover_${blok.id}" style="height:148px;position:relative;background:linear-gradient(135deg,#162016,#1b3a1b);">
         <img id="coverimg_${blok.id}" src="" style="width:100%;height:100%;object-fit:cover;display:none;opacity:0;transition:opacity 0.3s;">
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.65) 100%);"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.7) 100%);"></div>
         <div style="position:absolute;bottom:0;left:0;right:0;padding:10px 14px;display:flex;align-items:flex-end;justify-content:space-between;">
           <div>
-            <div style="font-family:var(--font-serif);font-size:16px;color:#fff;line-height:1.2;">${blok.nama}</div>
+            <div style="font-family:var(--font-serif);font-size:17px;color:#fff;line-height:1.2;text-shadow:0 1px 4px rgba(0,0,0,0.4);">${blok.nama}</div>
             <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-top:2px;">📍 ${blok.lokasi} · ⛰️ ${parseInt(blok.mdpl).toLocaleString('id-ID')} mdpl</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
@@ -895,10 +952,9 @@ function renderKebun(){
           </div>
         </div>
         <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;">
-          <button class="o-ebt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);" onclick="event.stopPropagation()">✏️</button>
-          <button class="o-dbt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.3);border-color:rgba(248,113,113,0.3);color:#f87171;" onclick="event.stopPropagation()">🗑️</button>
+          <button class="o-ebt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.35);border-color:rgba(255,255,255,0.18);color:rgba(255,255,255,0.85);" onclick="event.stopPropagation()">✏️</button>
+          <button class="o-dbt" data-id="${blok.id}" type="button" style="background:rgba(0,0,0,0.35);border-color:rgba(248,113,113,0.3);color:#f87171;" onclick="event.stopPropagation()">🗑️</button>
         </div>
-        <div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,0.3);border:1px dashed rgba(255,255,255,0.2);border-radius:7px;padding:4px 8px;font-size:9.5px;color:rgba(255,255,255,0.6);">📷 Tap untuk edit cover</div>
       </div>
       <div style="padding:12px 14px;">
       <div id="wb_${blok.id}" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--owner-text2);">
@@ -917,12 +973,17 @@ function renderKebun(){
       </div>
       ${overdue?`<div class="o-alert-r">⚠️ ${overdue} tugas terlambat di kebun ini</div>`:''}
       ${al.map(a=>`<div class="${a.t==='w'?'o-alert-w':'o-alert-i'}">${a.msg}</div>`).join('')}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div class="kode-badge" data-kode="${blok.kode}">
           <span class="kode-badge-label">KODE PETANI</span>
           <span>${blok.kode}</span>
           <span style="font-size:9px;opacity:0.6;">📋</span>
         </div>
+        <button class="card-share-btn" data-id="${blok.id}" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:var(--owner-green);border-radius:8px;padding:6px 11px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share Kebun
+        </button>
+      </div>
       </div>
     </div>`;
   }).join('');
@@ -932,6 +993,11 @@ function renderKebun(){
   document.querySelectorAll('.kode-badge').forEach(btn=>btn.addEventListener('click',()=>{
     if(navigator.clipboard)navigator.clipboard.writeText(btn.dataset.kode);
     toast('📋 Kode "'+btn.dataset.kode+'" disalin!');
+  }));
+  // Bind share buttons
+  document.querySelectorAll('.card-share-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const blok=bloks.find(b=>b.id===btn.dataset.id);
+    if(blok) shareKebunAsImage(blok);
   }));
   // Load cover photos async per blok
   bloks.forEach(blok=>{
@@ -1110,10 +1176,19 @@ async function tambahBlok(){
   showLoad('Menyimpan...');
   try{
     const kode=genKode();
-    await db.ref('bloks').push({ nama,lokasi,mdpl,varietas:fS.varietas,pupuk:fS.pupuk,cuaca:fS.cuaca,tanggal:tgl,pohon,kode,ownerId:currentUser.uid,createdAt:Date.now() });
+    const ref = await db.ref('bloks').push({ nama,lokasi,mdpl,varietas:fS.varietas,pupuk:fS.pupuk,cuaca:fS.cuaca,tanggal:tgl,pohon,kode,ownerId:currentUser.uid,createdAt:Date.now() });
+    // Save cover photo if set
+    if(newBlokCoverData){
+      await db.ref('covers/'+ref.key).set({data:newBlokCoverData,updatedAt:Date.now()});
+      newBlokCoverData=null;
+    }
     hideLoad();
     ['f_nama','f_lokasi','f_mdpl','f_tgl','f_pohon'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('zonaP').style.display='none';
+    // Reset cover preview
+    const cprev=document.getElementById('f_cover_preview');
+    if(cprev){ cprev.style.display='none'; cprev.innerHTML=''; }
+    document.getElementById('f_cover_label').textContent='📷 Tambah Foto Cover Kebun';
     fS.varietas='Arabika'; fS.pupuk='Organik'; fS.cuaca='Kemarau';
     document.querySelectorAll('.o-to[data-f]').forEach(o=>{ if(!o.dataset.f.startsWith('e_')) o.classList.toggle('selected',o.dataset.v===fS[o.dataset.f]); });
     toast('✅ Blok "'+nama+'" ditambahkan! Kode: '+kode);
@@ -1143,6 +1218,19 @@ function openEdit(id){
     document.querySelectorAll('.o-to[data-f="'+f+'"]').forEach(o=>o.classList.toggle('selected',o.dataset.v===eS[f]));
   });
   prevZona(b.mdpl,'zonaPE');
+  // Reset cover in edit form
+  editBlokCoverData=null;
+  document.getElementById('e_cover_preview').style.display='none';
+  document.getElementById('e_cover_label').textContent='Ganti Foto Cover';
+  document.getElementById('e_cover_input').value='';
+  // Load existing cover
+  db.ref('covers/'+id).once('value').then(snap=>{
+    if(snap.exists()){
+      document.getElementById('e_cover_img').src=snap.val().data;
+      document.getElementById('e_cover_preview').style.display='block';
+      document.getElementById('e_cover_label').textContent='✅ Foto cover ada — tap untuk ganti';
+    }
+  }).catch(()=>{});
   document.getElementById('editModal').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1158,6 +1246,11 @@ async function simpanEdit(){
   showLoad('Menyimpan...');
   try{
     await db.ref('bloks/'+id).update({ nama,lokasi,mdpl,varietas:eS.e_varietas,pupuk:eS.e_pupuk,cuaca:eS.e_cuaca,tanggal:tgl,pohon });
+    // Save updated cover if changed
+    if(editBlokCoverData){
+      await db.ref('covers/'+id).set({data:editBlokCoverData,updatedAt:Date.now()});
+      editBlokCoverData=null;
+    }
     hideLoad(); closeEdit(); toast('✅ Blok diperbarui!');
   }catch(e){ hideLoad(); toast('❌ '+e.message); }
 }
@@ -1246,6 +1339,198 @@ function openFotoModal(src,info,key,ownerId){
     };
   } else { del.style.display='none'; }
   document.getElementById('fotoModalOv').classList.add('open');
+}
+
+
+// ── SHARE KEBUN AS IMAGE ──────────────────────────────────
+async function shareKebunAsImage(blok){
+  showLoad('Membuat gambar kebun...');
+  try{
+    const tasks = generateTasks(blok);
+    const done = tasks.filter(t=>t.done).length;
+    const total = tasks.length;
+    const pct = total?Math.round(done/total*100):0;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const overdue = tasks.filter(t=>t.targetDate<today&&!t.done).length;
+    const zona = getZona(blok.mdpl), z = getZL(zona);
+    const col = pct>=75?'#4ade80':pct>=40?'#fbbf24':'#f87171';
+
+    const W=380, H=520, scale=2;
+    const canvas = document.createElement('canvas');
+    canvas.width=W*scale; canvas.height=H*scale;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale,scale);
+
+    // ── Background ──
+    ctx.fillStyle='#0e1a0e';
+    roundRect(ctx,0,0,W,H,20); ctx.fill();
+
+    // ── Cover photo or gradient ──
+    const coverSnap = await db.ref('covers/'+blok.id).once('value');
+    const photoH = 160;
+    if(coverSnap.exists()){
+      try{
+        const img = new Image();
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=coverSnap.val().data; });
+        ctx.save();
+        roundRect(ctx,0,0,W,photoH+20,[20,20,0,0]); ctx.clip();
+        ctx.drawImage(img,0,0,W,photoH);
+        ctx.restore();
+      }catch(e){
+        drawPhotoBg(ctx,W,photoH);
+      }
+    } else {
+      drawPhotoBg(ctx,W,photoH);
+    }
+
+    // Photo gradient overlay
+    const grad = ctx.createLinearGradient(0,photoH-60,0,photoH+10);
+    grad.addColorStop(0,'rgba(14,26,14,0)');
+    grad.addColorStop(1,'rgba(14,26,14,0.92)');
+    ctx.fillStyle=grad; ctx.fillRect(0,photoH-60,W,80);
+
+    // ── Kebun name on photo ──
+    ctx.fillStyle='#fff';
+    ctx.font='bold 22px serif'; ctx.textAlign='left';
+    ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowBlur=8;
+    ctx.fillText(blok.nama,18,photoH-8);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.font='11px sans-serif';
+    ctx.fillText('📍 '+blok.lokasi+' · ⛰️ '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl',18,photoH+12);
+
+    // Edit/delete buttons removed from share image - clean look
+    const bodyY = photoH+28;
+
+    // ── Zona badge ──
+    const zoneColors = {zr:['rgba(251,191,36,0.15)','#fbbf24'], zm:['rgba(74,222,128,0.12)','#4ade80'], zt:['rgba(96,165,250,0.12)','#60a5fa']};
+    const zc = zoneColors[z.cls]||zoneColors.zm;
+    const ztext = z.icon+' '+z.label;
+    ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+    const ztw = ctx.measureText(ztext).width+16;
+    ctx.fillStyle=zc[0]; roundRect(ctx,18,bodyY,ztw,20,99); ctx.fill();
+    ctx.fillStyle=zc[1]; ctx.fillText(ztext,26,bodyY+14);
+
+    // ── Stats row ──
+    const statsY = bodyY+30;
+    const stats = [
+      {num:parseInt(blok.pohon).toLocaleString('id-ID'), lbl:'Pohon'},
+      {num:blok.varietas, lbl:'Varietas'},
+      {num:blok.pupuk, lbl:'Pupuk'},
+      {num:blok.cuaca, lbl:'Musim'}
+    ];
+    const sw=(W-36)/4;
+    stats.forEach((s,i)=>{
+      const x=18+i*sw;
+      ctx.fillStyle='rgba(255,255,255,0.04)';
+      roundRect(ctx,x,statsY,sw-6,52,8); ctx.fill();
+      ctx.fillStyle='#e8f0e8'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(s.num,x+sw/2-3,statsY+22);
+      ctx.fillStyle='rgba(232,240,232,0.4)'; ctx.font='8.5px sans-serif';
+      ctx.fillText(s.lbl.toUpperCase(),x+sw/2-3,statsY+38);
+    });
+
+    // ── Progress bar ──
+    const progY = statsY+62;
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    roundRect(ctx,18,progY,W-36,42,10); ctx.fill();
+    // bar track
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    roundRect(ctx,30,progY+26,W-60,7,99); ctx.fill();
+    // bar fill
+    const barW = Math.max(8,(W-60)*(pct/100));
+    ctx.fillStyle=col;
+    roundRect(ctx,30,progY+26,barW,7,99); ctx.fill();
+    // pct text
+    ctx.fillStyle=col; ctx.font='bold 18px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(pct+'%',30,progY+20);
+    ctx.fillStyle='rgba(232,240,232,0.5)'; ctx.font='10px sans-serif';
+    ctx.fillText('Progress Perawatan',30+44,progY+20);
+    ctx.fillStyle='rgba(232,240,232,0.35)'; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(done+'/'+total+' tugas',W-30,progY+20);
+
+    // ── Overdue warning if any ──
+    if(overdue>0){
+      const warnY=progY+52;
+      ctx.fillStyle='rgba(248,113,113,0.08)';
+      roundRect(ctx,18,warnY,W-36,26,8); ctx.fill();
+      ctx.fillStyle='#f87171'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+      ctx.fillText('⚠️ '+overdue+' tugas terlambat',26,warnY+17);
+    }
+
+    // ── Kode petani ──
+    const kodeY = overdue>0 ? progY+90 : progY+62;
+    ctx.fillStyle='rgba(251,191,36,0.08)';
+    roundRect(ctx,18,kodeY,W-36,34,9); ctx.fill();
+    ctx.fillStyle='rgba(251,191,36,0.5)'; ctx.font='8px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('KODE PETANI',26,kodeY+12);
+    ctx.fillStyle='#fbbf24'; ctx.font='bold 16px sans-serif'; ctx.letterSpacing='4px';
+    ctx.fillText(blok.kode||'------',26,kodeY+27);
+    ctx.letterSpacing='0px';
+
+    // ── Branding footer ──
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    ctx.fillRect(18,H-42,W-36,1);
+    // Logo circle
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    roundRect(ctx,18,H-34,24,24,99); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('☕',30,H-18);
+    ctx.fillStyle='rgba(232,240,232,0.6)'; ctx.font='bold 11px serif'; ctx.textAlign='left';
+    ctx.fillText('Talaga Hangsa',48,H-22);
+    ctx.fillStyle='rgba(232,240,232,0.25)'; ctx.font='9px sans-serif';
+    ctx.fillText('KopiPlanPro',48,H-10);
+    ctx.fillStyle='rgba(232,240,232,0.2)'; ctx.textAlign='right'; ctx.font='8.5px sans-serif';
+    ctx.fillText('wonderpic.github.io/kebunkopi',W-18,H-16);
+
+    hideLoad();
+
+    // Share
+    canvas.toBlob(async blob=>{
+      if(!blob){ toast('❌ Gagal buat gambar'); return; }
+      const file=new File([blob],blok.nama.replace(/\s+/g,'-')+'-kebun.png',{type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({
+          files:[file],
+          title:blok.nama+' — KopiPlanPro',
+          text:'Kebun kopi '+blok.nama+' 🌿☕ #TalagaHangsa #KopiPlanPro'
+        }).catch(()=>downloadImage(blob,blok.nama));
+      } else {
+        downloadImage(blob,blok.nama);
+      }
+    },'image/png',0.95);
+
+  }catch(err){
+    hideLoad();
+    console.error('Share error:',err);
+    toast('❌ Gagal membuat gambar. Coba screenshot manual.');
+  }
+}
+
+function downloadImage(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(name||'kebun').replace(/\s+/g,'-')+'-kopi.png';
+  a.click();
+  toast('📥 Gambar disimpan ke galeri. Share dari sana ke medsos!');
+}
+
+function drawPhotoBg(ctx,W,H){
+  const g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#1b5e20'); g.addColorStop(1,'#2d6a2d');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.font='52px serif';
+  ctx.textAlign='center'; ctx.fillText('☕',W/2,H/2+18);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(typeof r==='number') r=[r,r,r,r];
+  ctx.beginPath();
+  ctx.moveTo(x+r[0],y);
+  ctx.lineTo(x+w-r[1],y); ctx.quadraticCurveTo(x+w,y,x+w,y+r[1]);
+  ctx.lineTo(x+w,y+h-r[2]); ctx.quadraticCurveTo(x+w,y+h,x+w-r[2],y+h);
+  ctx.lineTo(x+r[3],y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r[3]);
+  ctx.lineTo(x,y+r[0]); ctx.quadraticCurveTo(x,y,x+r[0],y);
+  ctx.closePath();
 }
 
 // ── INIT ──────────────────────────────────────────────
