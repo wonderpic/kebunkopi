@@ -154,6 +154,18 @@
           <div class="o-fg"><label class="o-fl">Tanggal Tanam</label><input class="o-fi" id="f_tgl" type="date"></div>
           <div class="o-fg"><label class="o-fl">Jumlah Pohon</label><input class="o-fi" id="f_pohon" type="number" placeholder="150" min="1"></div>
         </div>
+        <div class="o-fg">
+          <label class="o-fl">Foto Cover Kebun (Opsional)</label>
+          <button type="button" id="btnAddCover" style="width:100%;padding:11px 13px;border:1.5px dashed rgba(74,222,128,0.3);border-radius:12px;background:rgba(74,222,128,0.04);color:var(--owner-text2);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">📷</span>
+            <span id="f_cover_label">Tambah Foto Cover Kebun</span>
+          </button>
+          <input type="file" id="f_cover_input" accept="image/*" style="display:none;">
+          <div id="f_cover_preview" style="display:none;margin-top:8px;position:relative;height:90px;border-radius:10px;overflow:hidden;">
+            <img id="f_cover_img" style="width:100%;height:100%;object-fit:cover;">
+            <button type="button" id="btnRemoveCover" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:6px;padding:3px 7px;font-size:10px;cursor:pointer;">✕ Hapus</button>
+          </div>
+        </div>
         <button class="o-sbtn" id="btnTambah" type="button">➕ Simpan Blok</button>
       </div>
     </div>
@@ -231,6 +243,18 @@
     <div class="o-fr">
       <div class="o-fg"><label class="o-fl">Tanggal Tanam</label><input class="o-fi" id="e_tgl" type="date"></div>
       <div class="o-fg"><label class="o-fl">Jumlah Pohon</label><input class="o-fi" id="e_pohon" type="number" min="1"></div>
+    </div>
+    <div class="o-fg" style="margin-top:4px;">
+      <label class="o-fl">Foto Cover Kebun</label>
+      <button type="button" id="btnEditCover" style="width:100%;padding:10px 13px;border:1.5px dashed rgba(74,222,128,0.3);border-radius:12px;background:rgba(74,222,128,0.04);color:var(--owner-text2);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">📷</span>
+        <span id="e_cover_label">Ganti Foto Cover</span>
+      </button>
+      <input type="file" id="e_cover_input" accept="image/*" style="display:none;">
+      <div id="e_cover_preview" style="display:none;margin-top:8px;position:relative;height:90px;border-radius:10px;overflow:hidden;">
+        <img id="e_cover_img" style="width:100%;height:100%;object-fit:cover;">
+        <button type="button" id="btnRemoveEditCover" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:6px;padding:3px 7px;font-size:10px;cursor:pointer;">✕ Hapus</button>
+      </div>
     </div>
     <button class="o-sbtn" id="btnSimpanEdit" type="button" style="background:linear-gradient(135deg,#1d4ed8,#2563eb);">💾 Simpan Perubahan</button>
     <button class="m-bbtn" id="btnBatalEdit" type="button">Batal</button>
