@@ -29,6 +29,8 @@ let weatherCache = {}; // {lat_lon: {data, timestamp}}
 let farmerCoverUrl = null;
 let newBlokCoverData = null; // cover photo for new blok being added
 let editBlokCoverData = null; // cover photo for blok being edited
+let newBlokLat = null, newBlokLon = null; // GPS coords for new blok
+let editBlokLat = null, editBlokLon = null; // GPS coords for edit
 const fS = { varietas:'Arabika', pupuk:'Organik', cuaca:'Kemarau' };
 const eS = { e_varietas:'Arabika', e_pupuk:'Organik', e_cuaca:'Kemarau' };
 
@@ -182,15 +184,19 @@ async function loadWeatherForBlok(blok, barId, recId){
   if(!el) return;
   el.innerHTML='<span class="weather-loading">📡 Memuat cuaca '+blok.lokasi+'...</span>';
 
-  const coords=await getCityCoords(blok.lokasi);
-  if(!coords){
-    el.innerHTML='<span class="weather-loading">📍 Lokasi tidak ditemukan</span>';
-    return;
+  let lat=blok.lat, lon=blok.lon;
+  // Use stored GPS coords if available (most accurate)
+  // Otherwise fallback to geocoding by city name
+  if(!lat || !lon){
+    const coords=await getCityCoords(blok.lokasi);
+    if(!coords){
+      el.innerHTML='<span class="weather-loading">📍 Lokasi tidak ditemukan — tambahkan GPS di Edit Kebun</span>';
+      return;
+    }
+    lat=coords.lat; lon=coords.lon;
   }
-  // Store coords in blok for future use
-  blok._lat=coords.lat; blok._lon=coords.lon;
-
-  const weather=await getWeather(coords.lat, coords.lon);
+  blok._lat=lat; blok._lon=lon;
+  const weather=await getWeather(lat, lon);
   renderWeatherBar(weather, blok, barId);
 
   // Render recommendations
@@ -220,6 +226,19 @@ document.getElementById('btnMasukKode').addEventListener('click', masukKode);
 document.getElementById('btnLogout').addEventListener('click', doLogout);
 document.getElementById('btnFarmerLogout').addEventListener('click', doLogout);
 document.getElementById('btnTambah').addEventListener('click', tambahBlok);
+// GPS buttons
+document.getElementById('btnDetectGPS').addEventListener('click',()=>{
+  detectGPS('new','new',
+    document.getElementById('btnDetectGPS'),
+    document.getElementById('f_gps_info')
+  );
+});
+document.getElementById('btnDetectGPSEdit').addEventListener('click',()=>{
+  detectGPS('edit','edit',
+    document.getElementById('btnDetectGPSEdit'),
+    document.getElementById('e_gps_info')
+  );
+});
 // Cover upload - Tambah form
 document.getElementById('btnAddCover').addEventListener('click',()=>document.getElementById('f_cover_input').click());
 document.getElementById('f_cover_input').addEventListener('change', async function(){
@@ -519,9 +538,13 @@ async function handleFarmerCoverUpload(e){
 async function loadWeatherForFarmer(blok){
   const wEl=document.getElementById('farmerWeatherCard');
   if(!wEl) return;
-  const coords=await getCityCoords(blok.lokasi);
-  if(!coords){ wEl.style.display='none'; return; }
-  const weather=await getWeather(coords.lat, coords.lon);
+  let lat=blok.lat, lon=blok.lon;
+  if(!lat||!lon){
+    const coords=await getCityCoords(blok.lokasi);
+    if(!coords){ wEl.style.display='none'; return; }
+    lat=coords.lat; lon=coords.lon;
+  }
+  const weather=await getWeather(lat, lon);
   if(!weather){ wEl.style.display='none'; return; }
   const recs=getWeatherRecommendations(weather,blok);
   document.getElementById('farmerWeatherIcon').textContent=weather.label.split(' ')[0];
@@ -1176,7 +1199,9 @@ async function tambahBlok(){
   showLoad('Menyimpan...');
   try{
     const kode=genKode();
-    const ref = await db.ref('bloks').push({ nama,lokasi,mdpl,varietas:fS.varietas,pupuk:fS.pupuk,cuaca:fS.cuaca,tanggal:tgl,pohon,kode,ownerId:currentUser.uid,createdAt:Date.now() });
+    const blokData = { nama,lokasi,mdpl,varietas:fS.varietas,pupuk:fS.pupuk,cuaca:fS.cuaca,tanggal:tgl,pohon,kode,ownerId:currentUser.uid,createdAt:Date.now() };
+    if(newBlokLat && newBlokLon){ blokData.lat=newBlokLat; blokData.lon=newBlokLon; }
+    const ref = await db.ref('bloks').push(blokData);
     // Save cover photo if set
     if(newBlokCoverData){
       await db.ref('covers/'+ref.key).set({data:newBlokCoverData,updatedAt:Date.now()});
@@ -1185,6 +1210,12 @@ async function tambahBlok(){
     hideLoad();
     ['f_nama','f_lokasi','f_mdpl','f_tgl','f_pohon'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('zonaP').style.display='none';
+    newBlokLat=null; newBlokLon=null;
+    // Reset GPS button
+    const gpsBtn=document.getElementById('btnDetectGPS');
+    if(gpsBtn){ gpsBtn.textContent='📍 Deteksi GPS'; gpsBtn.style.borderColor=''; gpsBtn.style.color=''; }
+    const gpsInfo=document.getElementById('f_gps_info');
+    if(gpsInfo){ gpsInfo.style.display='none'; }
     // Reset cover preview
     const cprev=document.getElementById('f_cover_preview');
     if(cprev){ cprev.style.display='none'; cprev.innerHTML=''; }
@@ -1218,6 +1249,20 @@ function openEdit(id){
     document.querySelectorAll('.o-to[data-f="'+f+'"]').forEach(o=>o.classList.toggle('selected',o.dataset.v===eS[f]));
   });
   prevZona(b.mdpl,'zonaPE');
+  // Load existing GPS
+  editBlokLat=b.lat||null; editBlokLon=b.lon||null;
+  const eGpsBtn=document.getElementById('btnDetectGPSEdit');
+  const eGpsInfo=document.getElementById('e_gps_info');
+  if(eGpsBtn && b.lat && b.lon){
+    eGpsBtn.textContent='📍 GPS Tersimpan';
+    eGpsBtn.style.borderColor='var(--owner-green)';
+    eGpsBtn.style.color='var(--owner-green)';
+    if(eGpsInfo){ eGpsInfo.textContent='✅ '+b.lat.toFixed(5)+', '+b.lon.toFixed(5); eGpsInfo.style.color='var(--owner-green)'; eGpsInfo.style.display='block'; }
+  } else if(eGpsBtn){
+    eGpsBtn.textContent='📍 Deteksi GPS';
+    eGpsBtn.style.borderColor=''; eGpsBtn.style.color='';
+    if(eGpsInfo){ eGpsInfo.style.display='none'; }
+  }
   // Reset cover in edit form
   editBlokCoverData=null;
   document.getElementById('e_cover_preview').style.display='none';
@@ -1245,7 +1290,10 @@ async function simpanEdit(){
   if(!nama||!lokasi||!mdpl||!tgl||!pohon){ toast('⚠️ Harap isi semua kolom!'); return; }
   showLoad('Menyimpan...');
   try{
-    await db.ref('bloks/'+id).update({ nama,lokasi,mdpl,varietas:eS.e_varietas,pupuk:eS.e_pupuk,cuaca:eS.e_cuaca,tanggal:tgl,pohon });
+    const editData = { nama,lokasi,mdpl,varietas:eS.e_varietas,pupuk:eS.e_pupuk,cuaca:eS.e_cuaca,tanggal:tgl,pohon };
+    if(editBlokLat && editBlokLon){ editData.lat=editBlokLat; editData.lon=editBlokLon; }
+    await db.ref('bloks/'+id).update(editData);
+    editBlokLat=null; editBlokLon=null;
     // Save updated cover if changed
     if(editBlokCoverData){
       await db.ref('covers/'+id).set({data:editBlokCoverData,updatedAt:Date.now()});
@@ -1342,6 +1390,71 @@ function openFotoModal(src,info,key,ownerId){
 }
 
 
+
+// ── GPS LOCATION DETECTOR ────────────────────────────────
+async function detectGPS(latVar, lonVar, btnEl, infoEl){
+  if(!navigator.geolocation){
+    toast('⚠️ GPS tidak didukung browser ini.');
+    return;
+  }
+  btnEl.textContent='📡 Mendeteksi lokasi...';
+  btnEl.disabled=true;
+  return new Promise((resolve)=>{
+    navigator.geolocation.getCurrentPosition(
+      async pos=>{
+        const lat=pos.coords.latitude, lon=pos.coords.longitude;
+        const acc=Math.round(pos.coords.accuracy);
+        // Store coords
+        if(latVar==='new'){ newBlokLat=lat; newBlokLon=lon; }
+        else { editBlokLat=lat; editBlokLon=lon; }
+        // Reverse geocode to get area name
+        try{
+          const url='https://geocoding-api.open-meteo.com/v1/search?name=&count=1&language=id&format=json&latitude='+lat+'&longitude='+lon;
+          // Open-Meteo doesn't do reverse geocode, use nominatim
+          const res=await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=id');
+          const data=await res.json();
+          const area=data.address?.city||data.address?.town||data.address?.village||data.address?.county||'';
+          if(area && latVar==='new'){
+            const lokasiEl=document.getElementById('f_lokasi');
+            if(!lokasiEl.value) lokasiEl.value=area;
+          } else if(area && latVar==='edit'){
+            const lokasiEl=document.getElementById('e_lokasi');
+            if(!lokasiEl.value) lokasiEl.value=area;
+          }
+          if(infoEl){
+            infoEl.textContent='✅ GPS: '+lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+acc+'m)';
+            infoEl.style.color='var(--owner-green)';
+            infoEl.style.display='block';
+          }
+        }catch(e){
+          if(infoEl){
+            infoEl.textContent='✅ GPS: '+lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+acc+'m)';
+            infoEl.style.color='var(--owner-green)';
+            infoEl.style.display='block';
+          }
+        }
+        btnEl.textContent='📍 Lokasi Terdeteksi';
+        btnEl.style.borderColor='var(--owner-green)';
+        btnEl.style.color='var(--owner-green)';
+        btnEl.disabled=false;
+        resolve({lat,lon});
+      },
+      err=>{
+        btnEl.textContent='📍 Deteksi GPS';
+        btnEl.disabled=false;
+        if(infoEl){
+          infoEl.textContent='❌ GPS gagal: '+err.message;
+          infoEl.style.color='var(--owner-red)';
+          infoEl.style.display='block';
+        }
+        toast('⚠️ Izinkan akses lokasi di browser.');
+        resolve(null);
+      },
+      {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+    );
+  });
+}
+
 // ── SHARE KEBUN AS IMAGE ──────────────────────────────────
 async function shareKebunAsImage(blok){
   showLoad('Membuat gambar kebun...');
@@ -1392,11 +1505,10 @@ async function shareKebunAsImage(blok){
     // ── Kebun name on photo ──
     ctx.fillStyle='#fff';
     ctx.font='bold 22px serif'; ctx.textAlign='left';
-    ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowBlur=8;
+    ctx.shadowBlur=0; // no shadow - prevents glow artifacts
     ctx.fillText(blok.nama,18,photoH-8);
-    ctx.shadowBlur=0;
     ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.font='11px sans-serif';
-    ctx.fillText('📍 '+blok.lokasi+' · ⛰️ '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl',18,photoH+12);
+    ctx.fillText(blok.lokasi+' - '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl',18,photoH+12);
 
     // Edit/delete buttons removed from share image - clean look
     const bodyY = photoH+28;
@@ -1404,7 +1516,7 @@ async function shareKebunAsImage(blok){
     // ── Zona badge ──
     const zoneColors = {zr:['rgba(251,191,36,0.15)','#fbbf24'], zm:['rgba(74,222,128,0.12)','#4ade80'], zt:['rgba(96,165,250,0.12)','#60a5fa']};
     const zc = zoneColors[z.cls]||zoneColors.zm;
-    const ztext = z.icon+' '+z.label;
+    const ztext = z.label; // no emoji - canvas emoji causes glitch
     ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
     const ztw = ctx.measureText(ztext).width+16;
     ctx.fillStyle=zc[0]; roundRect(ctx,18,bodyY,ztw,20,99); ctx.fill();
@@ -1453,8 +1565,13 @@ async function shareKebunAsImage(blok){
       const warnY=progY+52;
       ctx.fillStyle='rgba(248,113,113,0.08)';
       roundRect(ctx,18,warnY,W-36,26,8); ctx.fill();
+      // Draw warning triangle shape
+      ctx.fillStyle='#f87171';
+      ctx.beginPath(); ctx.moveTo(26,warnY+16); ctx.lineTo(32,warnY+6); ctx.lineTo(38,warnY+16); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#0e1a0e'; ctx.font='bold 8px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('!',32,warnY+15);
       ctx.fillStyle='#f87171'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
-      ctx.fillText('⚠️ '+overdue+' tugas terlambat',26,warnY+17);
+      ctx.fillText(overdue+' tugas terlambat',44,warnY+17);
     }
 
     // ── Kode petani ──
@@ -1470,15 +1587,17 @@ async function shareKebunAsImage(blok){
     // ── Branding footer ──
     ctx.fillStyle='rgba(255,255,255,0.06)';
     ctx.fillRect(18,H-42,W-36,1);
-    // Logo circle
-    ctx.fillStyle='rgba(255,255,255,0.08)';
-    roundRect(ctx,18,H-34,24,24,99); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='12px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('☕',30,H-18);
-    ctx.fillStyle='rgba(232,240,232,0.6)'; ctx.font='bold 11px serif'; ctx.textAlign='left';
-    ctx.fillText('Talaga Hangsa',48,H-22);
-    ctx.fillStyle='rgba(232,240,232,0.25)'; ctx.font='9px sans-serif';
-    ctx.fillText('KopiPlanPro',48,H-10);
+    // Branding bar - no emoji, pure text
+    ctx.fillStyle='rgba(74,222,128,0.15)';
+    roundRect(ctx,18,H-38,16,16,4); ctx.fill();
+    ctx.strokeStyle='rgba(74,222,128,0.4)'; ctx.lineWidth=1;
+    ctx.strokeRect(18,H-38,16,16);
+    ctx.fillStyle='rgba(74,222,128,0.7)'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('TH',26,H-27);
+    ctx.fillStyle='rgba(232,240,232,0.7)'; ctx.font='bold 11px serif'; ctx.textAlign='left';
+    ctx.fillText('Talaga Hangsa',40,H-26);
+    ctx.fillStyle='rgba(232,240,232,0.35)'; ctx.font='9px sans-serif';
+    ctx.fillText('KopiPlanPro',40,H-14);
     ctx.fillStyle='rgba(232,240,232,0.2)'; ctx.textAlign='right'; ctx.font='8.5px sans-serif';
     ctx.fillText('wonderpic.github.io/kebunkopi',W-18,H-16);
 
@@ -1518,8 +1637,13 @@ function drawPhotoBg(ctx,W,H){
   const g=ctx.createLinearGradient(0,0,W,H);
   g.addColorStop(0,'#1b5e20'); g.addColorStop(1,'#2d6a2d');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.font='52px serif';
-  ctx.textAlign='center'; ctx.fillText('☕',W/2,H/2+18);
+  // Draw coffee bean shape instead of emoji
+  ctx.fillStyle='rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(W/2,H/2,22,32,Math.PI/6,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(W/2-8,H/2-16); ctx.bezierCurveTo(W/2+12,H/2-8,W/2-12,H/2+8,W/2+8,H/2+16); ctx.stroke();
 }
 
 function roundRect(ctx,x,y,w,h,r){
