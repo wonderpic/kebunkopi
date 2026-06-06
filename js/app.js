@@ -227,18 +227,8 @@ document.getElementById('btnLogout').addEventListener('click', doLogout);
 document.getElementById('btnFarmerLogout').addEventListener('click', doLogout);
 document.getElementById('btnTambah').addEventListener('click', tambahBlok);
 // GPS buttons
-document.getElementById('btnDetectGPS').addEventListener('click',()=>{
-  detectGPS('new','new',
-    document.getElementById('btnDetectGPS'),
-    document.getElementById('f_gps_info')
-  );
-});
-document.getElementById('btnDetectGPSEdit').addEventListener('click',()=>{
-  detectGPS('edit','edit',
-    document.getElementById('btnDetectGPSEdit'),
-    document.getElementById('e_gps_info')
-  );
-});
+document.getElementById('btnDetectGPS').addEventListener('click',()=>showLocationPanel('new'));
+document.getElementById('btnDetectGPSEdit').addEventListener('click',()=>showLocationPanel('edit'));
 // Cover upload - Tambah form
 document.getElementById('btnAddCover').addEventListener('click',()=>document.getElementById('f_cover_input').click());
 document.getElementById('f_cover_input').addEventListener('change', async function(){
@@ -329,13 +319,14 @@ function loginOwner(){
   showLoad('Menghubungkan ke Google...');
   // SESSION persistence: auth only valid in this browser tab
   // Prevents other devices from accessing when URL is shared
-  auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
     const provider = new firebase.auth.GoogleAuthProvider();
     return auth.signInWithPopup(provider);
   }).then(result=>{
     console.log('Login OK:', result.user.email);
-    // Set session token so this tab is authorized
+    // Mark this device as logged in by owner
     sessionStorage.setItem('kpp_session', '1');
+    localStorage.setItem('kpp_owner_device', '1');
     hideLoad();
   }).catch(e=>{
     hideLoad();
@@ -374,6 +365,7 @@ async function masukKode(){
 async function doLogout(){
   // Clear session token and caches
   sessionStorage.removeItem('kpp_session');
+  localStorage.removeItem('kpp_owner_device');
   if('caches' in window){
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
@@ -409,11 +401,11 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById('ownerApp').style.display='none';
   document.getElementById('farmerApp').style.display='none';
 
-  // Privacy: check session token - prevents shared URL from auto-login
-  // Token is set only when user explicitly logs in this tab
-  const sessionToken = sessionStorage.getItem('kpp_session');
-  if(user && !sessionToken){
-    console.log('No session token - logging out for privacy');
+  // Privacy: only allow auto-login on device where user explicitly logged in
+  // localStorage persists on same device/browser, not when URL shared to other device
+  const ownerDevice = localStorage.getItem('kpp_owner_device');
+  if(user && !ownerDevice){
+    console.log('Not owner device - signing out for privacy');
     await auth.signOut();
     document.getElementById('loginScreen').style.display='flex';
     hideLoad();
@@ -1391,68 +1383,213 @@ function openFotoModal(src,info,key,ownerId){
 
 
 
-// ── GPS LOCATION DETECTOR ────────────────────────────────
-async function detectGPS(latVar, lonVar, btnEl, infoEl){
-  if(!navigator.geolocation){
-    toast('⚠️ GPS tidak didukung browser ini.');
-    return;
-  }
-  btnEl.textContent='📡 Mendeteksi lokasi...';
-  btnEl.disabled=true;
-  return new Promise((resolve)=>{
+// ── GPS / LOCATION PANEL ────────────────────────────────
+// mode: 'new' | 'edit'
+function showLocationPanel(mode){
+  const isNew = mode==='new';
+  const prefix = isNew ? 'f' : 'e';
+  const curLat = isNew ? newBlokLat : editBlokLat;
+  const curLon = isNew ? newBlokLon : editBlokLon;
+
+  // Build modal
+  let existing = document.getElementById('locPanel');
+  if(existing) existing.remove();
+
+  const ov = document.createElement('div');
+  ov.id='locPanel';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;display:flex;align-items:flex-end;justify-content:center;';
+
+  ov.innerHTML=`
+    <div style="background:#162016;border-radius:20px 20px 0 0;border:1px solid rgba(74,222,128,0.15);width:100%;max-width:430px;padding:20px 18px 36px;animation:slideUp 0.25s ease;">
+      <div style="width:36px;height:3px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto 16px;"></div>
+      <div style="font-size:16px;font-weight:700;color:#e8f0e8;margin-bottom:4px;">📍 Lokasi Kebun</div>
+      <div style="font-size:11.5px;color:rgba(232,240,232,0.5);margin-bottom:18px;">Pilih cara menentukan koordinat kebun untuk cuaca akurat</div>
+
+      <!-- Option 1: Auto GPS -->
+      <button id="locBtnGPS" type="button" style="width:100%;padding:13px 16px;margin-bottom:10px;border:1px solid rgba(74,222,128,0.25);border-radius:12px;background:rgba(74,222,128,0.06);color:#e8f0e8;font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(74,222,128,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Deteksi Otomatis (GPS)</div>
+          <div style="font-size:10.5px;color:rgba(232,240,232,0.5);margin-top:2px;">Gunakan jika sedang berada di lokasi kebun</div>
+        </div>
+      </button>
+
+      <!-- Option 2: Search by name -->
+      <button id="locBtnSearch" type="button" style="width:100%;padding:13px 16px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.03);color:#e8f0e8;font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(232,240,232,0.6)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Cari Nama Tempat</div>
+          <div style="font-size:10.5px;color:rgba(232,240,232,0.5);margin-top:2px;">Ketik nama desa/kecamatan/gunung untuk cari koordinat</div>
+        </div>
+      </button>
+
+      <!-- Option 3: Manual coords -->
+      <button id="locBtnManual" type="button" style="width:100%;padding:13px 16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.03);color:#e8f0e8;font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(232,240,232,0.6)" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;">Input Manual Koordinat</div>
+          <div style="font-size:10.5px;color:rgba(232,240,232,0.5);margin-top:2px;">Masukkan latitude & longitude dari Google Maps</div>
+        </div>
+      </button>
+
+      <!-- Search input (hidden by default) -->
+      <div id="locSearchBox" style="display:none;margin-bottom:12px;">
+        <input id="locSearchInput" type="text" placeholder="cth: Gunung Puntang, Pangalengan..." style="width:100%;padding:11px 13px;border:1px solid rgba(74,222,128,0.25);border-radius:10px;background:rgba(255,255,255,0.05);color:#e8f0e8;font-family:inherit;font-size:13px;outline:none;">
+        <button id="locSearchBtn" type="button" style="width:100%;margin-top:8px;padding:11px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);border-radius:10px;color:#4ade80;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Cari Koordinat</button>
+        <div id="locSearchResults" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- Manual input (hidden by default) -->
+      <div id="locManualBox" style="display:none;margin-bottom:12px;">
+        <div style="font-size:10.5px;color:rgba(232,240,232,0.5);margin-bottom:8px;">Dari Google Maps: tap titik lokasi → copy koordinat</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label style="font-size:10px;color:rgba(232,240,232,0.4);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Latitude</label>
+            <input id="locLatInput" type="number" step="any" placeholder="-6.9175" style="width:100%;padding:10px;border:1px solid rgba(74,222,128,0.2);border-radius:9px;background:rgba(255,255,255,0.05);color:#e8f0e8;font-family:inherit;font-size:13px;outline:none;">
+          </div>
+          <div>
+            <label style="font-size:10px;color:rgba(232,240,232,0.4);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;">Longitude</label>
+            <input id="locLonInput" type="number" step="any" placeholder="107.6191" style="width:100%;padding:10px;border:1px solid rgba(74,222,128,0.2);border-radius:9px;background:rgba(255,255,255,0.05);color:#e8f0e8;font-family:inherit;font-size:13px;outline:none;">
+          </div>
+        </div>
+        <button id="locManualSave" type="button" style="width:100%;margin-top:8px;padding:11px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);border-radius:10px;color:#4ade80;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">Simpan Koordinat</button>
+      </div>
+
+      <!-- Current coords display -->
+      <div id="locCurrentCoords" style="display:${curLat?'block':'none'};background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#4ade80;">
+        Koordinat tersimpan: ${curLat?curLat.toFixed(5)+', '+curLon.toFixed(5):''}
+      </div>
+
+      <button id="locClose" type="button" style="width:100%;padding:11px;background:none;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(232,240,232,0.4);font-family:inherit;font-size:13px;cursor:pointer;">Tutup</button>
+    </div>`;
+
+  // Close
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.remove(); });
+  document.getElementById('locClose').addEventListener('click', ()=>ov.remove());
+  document.body.appendChild(ov);
+
+  // GPS button
+  document.getElementById('locBtnGPS').addEventListener('click', ()=>{
+    const btn = document.getElementById('locBtnGPS');
+    btn.innerHTML='<div style="width:38px;height:38px;border-radius:10px;background:rgba(74,222,128,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></div><div><div style="font-weight:600;">Mendeteksi GPS...</div><div style="font-size:10.5px;color:rgba(232,240,232,0.5);">Mohon tunggu</div></div>';
+    btn.disabled=true;
+    if(!navigator.geolocation){ toast('GPS tidak didukung'); btn.disabled=false; return; }
     navigator.geolocation.getCurrentPosition(
       async pos=>{
         const lat=pos.coords.latitude, lon=pos.coords.longitude;
         const acc=Math.round(pos.coords.accuracy);
-        // Store coords
-        if(latVar==='new'){ newBlokLat=lat; newBlokLon=lon; }
-        else { editBlokLat=lat; editBlokLon=lon; }
-        // Reverse geocode to get area name
+        setCoords(mode, lat, lon, prefix);
+        // Reverse geocode
         try{
-          const url='https://geocoding-api.open-meteo.com/v1/search?name=&count=1&language=id&format=json&latitude='+lat+'&longitude='+lon;
-          // Open-Meteo doesn't do reverse geocode, use nominatim
           const res=await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=id');
           const data=await res.json();
           const area=data.address?.city||data.address?.town||data.address?.village||data.address?.county||'';
-          if(area && latVar==='new'){
-            const lokasiEl=document.getElementById('f_lokasi');
-            if(!lokasiEl.value) lokasiEl.value=area;
-          } else if(area && latVar==='edit'){
-            const lokasiEl=document.getElementById('e_lokasi');
-            if(!lokasiEl.value) lokasiEl.value=area;
+          if(area){
+            const el=document.getElementById(prefix+'_lokasi');
+            if(el&&!el.value) el.value=area;
           }
-          if(infoEl){
-            infoEl.textContent='✅ GPS: '+lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+acc+'m)';
-            infoEl.style.color='var(--owner-green)';
-            infoEl.style.display='block';
-          }
-        }catch(e){
-          if(infoEl){
-            infoEl.textContent='✅ GPS: '+lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+acc+'m)';
-            infoEl.style.color='var(--owner-green)';
-            infoEl.style.display='block';
-          }
-        }
-        btnEl.textContent='📍 Lokasi Terdeteksi';
-        btnEl.style.borderColor='var(--owner-green)';
-        btnEl.style.color='var(--owner-green)';
-        btnEl.disabled=false;
-        resolve({lat,lon});
+        }catch(e){}
+        showCoordsResult(lat, lon, acc);
+        toast('✅ GPS berhasil: ±'+acc+'m akurasi');
+        setTimeout(()=>ov.remove(), 1500);
       },
-      err=>{
-        btnEl.textContent='📍 Deteksi GPS';
-        btnEl.disabled=false;
-        if(infoEl){
-          infoEl.textContent='❌ GPS gagal: '+err.message;
-          infoEl.style.color='var(--owner-red)';
-          infoEl.style.display='block';
-        }
-        toast('⚠️ Izinkan akses lokasi di browser.');
-        resolve(null);
-      },
-      {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+      err=>{ btn.disabled=false; toast('GPS gagal. Coba cara lain.'); },
+      {enableHighAccuracy:true, timeout:15000, maximumAge:0}
     );
   });
+
+  // Search button
+  document.getElementById('locBtnSearch').addEventListener('click', ()=>{
+    document.getElementById('locSearchBox').style.display='block';
+    document.getElementById('locManualBox').style.display='none';
+    document.getElementById('locSearchInput').focus();
+  });
+  document.getElementById('locSearchBtn').addEventListener('click', async()=>{
+    const q = document.getElementById('locSearchInput').value.trim();
+    if(!q) return;
+    const btn = document.getElementById('locSearchBtn');
+    btn.textContent='Mencari...'; btn.disabled=true;
+    try{
+      const res=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q+' Indonesia')+'&format=json&limit=5&accept-language=id');
+      const results=await res.json();
+      const resEl=document.getElementById('locSearchResults');
+      if(!results.length){ resEl.innerHTML='<div style="color:rgba(248,113,113,0.8);font-size:12px;padding:8px;">Tidak ditemukan. Coba kata kunci lain.</div>'; btn.textContent='Cari Koordinat'; btn.disabled=false; return; }
+      resEl.innerHTML=results.map((r,i)=>`
+        <button data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.display_name}" type="button"
+          style="width:100%;padding:10px 12px;margin-bottom:6px;border:1px solid rgba(74,222,128,0.15);border-radius:9px;background:rgba(255,255,255,0.03);color:#e8f0e8;font-family:inherit;font-size:11.5px;cursor:pointer;text-align:left;">
+          <div style="font-weight:600;color:#4ade80;margin-bottom:2px;">${parseFloat(r.lat).toFixed(5)}, ${parseFloat(r.lon).toFixed(5)}</div>
+          <div style="opacity:0.6;font-size:10.5px;">${r.display_name.substring(0,80)}...</div>
+        </button>`).join('');
+      resEl.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const lat=parseFloat(b.dataset.lat), lon=parseFloat(b.dataset.lon);
+          setCoords(mode, lat, lon, prefix);
+          // Fill lokasi if empty
+          const parts=b.dataset.name.split(',');
+          const area=parts[0]?.trim()||'';
+          const el=document.getElementById(prefix+'_lokasi');
+          if(el&&!el.value) el.value=area;
+          showCoordsResult(lat, lon, 0);
+          toast('✅ Koordinat dipilih!');
+          setTimeout(()=>ov.remove(), 1200);
+        });
+      });
+      btn.textContent='Cari Koordinat'; btn.disabled=false;
+    }catch(e){ btn.textContent='Cari Koordinat'; btn.disabled=false; toast('Gagal mencari. Cek koneksi.'); }
+  });
+
+  // Manual button
+  document.getElementById('locBtnManual').addEventListener('click', ()=>{
+    document.getElementById('locManualBox').style.display='block';
+    document.getElementById('locSearchBox').style.display='none';
+  });
+  document.getElementById('locManualSave').addEventListener('click', ()=>{
+    const lat=parseFloat(document.getElementById('locLatInput').value);
+    const lon=parseFloat(document.getElementById('locLonInput').value);
+    if(isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180){
+      toast('Koordinat tidak valid'); return;
+    }
+    setCoords(mode, lat, lon, prefix);
+    showCoordsResult(lat, lon, 0);
+    toast('✅ Koordinat disimpan!');
+    setTimeout(()=>ov.remove(), 1200);
+  });
+
+  function setCoords(mode, lat, lon, prefix){
+    if(mode==='new'){ newBlokLat=lat; newBlokLon=lon; }
+    else { editBlokLat=lat; editBlokLon=lon; }
+    // Update GPS button in form
+    const formBtn=document.getElementById('btnDetectGPS'+(mode==='edit'?'Edit':''));
+    if(formBtn){
+      formBtn.style.borderColor='var(--owner-green)';
+      formBtn.style.color='var(--owner-green)';
+      formBtn.querySelector('span')||formBtn;
+      formBtn.innerHTML=formBtn.innerHTML.replace(/[^<]*$/,'');
+      const spans=formBtn.querySelectorAll('span,div');
+      formBtn.lastChild.textContent='';
+      formBtn.insertAdjacentHTML('beforeend','<span style="font-size:13px;font-weight:600;">Koordinat Tersimpan ✅</span>');
+    }
+    const infoEl=document.getElementById(prefix+'_gps_info');
+    if(infoEl){
+      infoEl.textContent='Koordinat: '+lat.toFixed(5)+', '+lon.toFixed(5);
+      infoEl.style.color='var(--owner-green)';
+      infoEl.style.display='block';
+    }
+  }
+
+  function showCoordsResult(lat, lon, acc){
+    const el=document.getElementById('locCurrentCoords');
+    if(el){
+      el.style.display='block';
+      el.textContent='Koordinat: '+lat.toFixed(5)+', '+lon.toFixed(5)+(acc>0?' (±'+acc+'m)':'');
+    }
+  }
 }
 
 // ── SHARE KEBUN AS IMAGE ──────────────────────────────────
@@ -1481,34 +1618,41 @@ async function shareKebunAsImage(blok){
     // ── Cover photo or gradient ──
     const coverSnap = await db.ref('covers/'+blok.id).once('value');
     const photoH = 160;
+
     if(coverSnap.exists()){
       try{
         const img = new Image();
-        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=coverSnap.val().data; });
-        ctx.save();
-        roundRect(ctx,0,0,W,photoH+20,[20,20,0,0]); ctx.clip();
-        ctx.drawImage(img,0,0,W,photoH);
-        ctx.restore();
+        img.crossOrigin = 'anonymous';
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>res(null); img.src=coverSnap.val().data; });
+        if(img.complete && img.naturalWidth > 0){
+          // Draw image directly - NO clip, NO gradient overlay to avoid compositing artifacts
+          ctx.drawImage(img, 0, 0, W, photoH);
+        } else {
+          drawPhotoBg(ctx, W, photoH);
+        }
       }catch(e){
-        drawPhotoBg(ctx,W,photoH);
+        drawPhotoBg(ctx, W, photoH);
       }
     } else {
-      drawPhotoBg(ctx,W,photoH);
+      drawPhotoBg(ctx, W, photoH);
     }
 
-    // Photo gradient overlay
-    const grad = ctx.createLinearGradient(0,photoH-60,0,photoH+10);
-    grad.addColorStop(0,'rgba(14,26,14,0)');
-    grad.addColorStop(1,'rgba(14,26,14,0.92)');
-    ctx.fillStyle=grad; ctx.fillRect(0,photoH-60,W,80);
+    // Simple dark bar at bottom of photo - solid rect, NO gradient (gradient causes pink artifact)
+    ctx.fillStyle = 'rgba(10,20,10,0.72)';
+    ctx.fillRect(0, photoH-50, W, 50);
+
+    // Rounded bottom corners of photo section using solid color
+    ctx.fillStyle = '#0e1a0e';
+    ctx.fillRect(0, photoH, W, 12);
 
     // ── Kebun name on photo ──
-    ctx.fillStyle='#fff';
-    ctx.font='bold 22px serif'; ctx.textAlign='left';
-    ctx.shadowBlur=0; // no shadow - prevents glow artifacts
-    ctx.fillText(blok.nama,18,photoH-8);
-    ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.font='11px sans-serif';
-    ctx.fillText(blok.lokasi+' - '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl',18,photoH+12);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 21px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(blok.nama, 18, photoH-22);
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = '10.5px sans-serif';
+    ctx.fillText(blok.lokasi+' - '+parseInt(blok.mdpl).toLocaleString('id-ID')+' mdpl', 18, photoH-7);
 
     // Edit/delete buttons removed from share image - clean look
     const bodyY = photoH+28;
