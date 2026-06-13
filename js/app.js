@@ -430,6 +430,7 @@ auth.onAuthStateChanged(async user=>{
     }
     hideLoad();
     listenBloks();
+    checkOnboarding();
     return;
   }
 
@@ -998,7 +999,11 @@ function renderKebun(){
         </div>
         <button class="card-share-btn" data-id="${blok.id}" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);color:var(--owner-green);border-radius:8px;padding:6px 11px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share Kebun
+          Share
+        </button>
+        <button class="card-export-btn" data-id="${blok.id}" type="button" style="display:flex;align-items:center;gap:5px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);color:#60a5fa;border-radius:8px;padding:6px 11px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
         </button>
       </div>
       </div>
@@ -1015,6 +1020,9 @@ function renderKebun(){
   document.querySelectorAll('.card-share-btn').forEach(btn=>btn.addEventListener('click',()=>{
     const blok=bloks.find(b=>b.id===btn.dataset.id);
     if(blok) shareKebunAsImage(blok);
+  }));
+  document.querySelectorAll('.card-export-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    openExportModal(btn.dataset.id);
   }));
   // Load cover photos async per blok
   bloks.forEach(blok=>{
@@ -1832,8 +1840,406 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.closePath();
 }
 
+
+// ── ONBOARDING DISCLAIMER ──────────────────────────────
+function checkOnboarding(){
+  const seen = localStorage.getItem('kpp_onboarding_v2');
+  if(!seen){
+    const el = document.getElementById('onboardingScreen');
+    if(el) el.style.display = 'flex';
+  }
+}
+function dismissOnboarding(){
+  localStorage.setItem('kpp_onboarding_v2', '1');
+  const el = document.getElementById('onboardingScreen');
+  if(el) el.style.display = 'none';
+}
+
+// ── EXPORT REPORT ──────────────────────────────────────
+let _exportBlokId = null;
+
+function openExportModal(blokId){
+  _exportBlokId = blokId;
+  const blok = bloks.find(b=>b.id===blokId);
+  if(!blok) return;
+  document.getElementById('exportBlokName').textContent = blok.nama + ' \u2014 ' + blok.lokasi;
+  document.getElementById('exportModal').style.display = 'flex';
+}
+
+function closeExportModal(){
+  document.getElementById('exportModal').style.display = 'none';
+  _exportBlokId = null;
+}
+
+// ── EXPORT CSV ────────────────────────────────────────
+function exportCSV(blokId){
+  const blok = bloks.find(b=>b.id===blokId);
+  if(!blok) return;
+  const tasks = generateTasks(blok);
+  tasks.sort((a,b)=>a.targetDate-b.targetDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const rows = [
+    ['LAPORAN KEBUN KOPI \u2014 '+blok.nama.toUpperCase()],
+    ['Dibuat','',new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})],
+    [''],
+    ['=== DATA KEBUN ==='],
+    ['Nama Blok', blok.nama],
+    ['Lokasi', blok.lokasi],
+    ['Ketinggian', blok.mdpl+' mdpl'],
+    ['Zona', getZL(getZona(blok.mdpl)).label],
+    ['Varietas', blok.varietas],
+    ['Metode Pupuk', blok.pupuk],
+    ['Kondisi Cuaca', blok.cuaca],
+    ['Tanggal Tanam', new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})],
+    ['Jumlah Pohon', blok.pohon+' pohon'],
+    ['Koordinat GPS', blok.lat&&blok.lon ? blok.lat.toFixed(5)+', '+blok.lon.toFixed(5) : 'Belum diisi'],
+    [''],
+    ['=== RINGKASAN TUGAS ==='],
+    ['Total Tugas', tasks.length],
+    ['Selesai', tasks.filter(t=>t.done).length],
+    ['Terlambat', tasks.filter(t=>t.targetDate<today&&!t.done).length],
+    ['Belum Dikerjakan', tasks.filter(t=>t.targetDate>=today&&!t.done).length],
+    ['Progress', (tasks.length?Math.round(tasks.filter(t=>t.done).length/tasks.length*100):0)+'%'],
+    [''],
+    ['=== DETAIL SEMUA JADWAL TUGAS ==='],
+    ['No','Jenis Tugas','Tanggal Target','Status','Kategori','Catatan Ilmiah'],
+  ];
+
+  tasks.forEach((t,i)=>{
+    const diff = Math.round((t.targetDate-today)/86400000);
+    let status = t.done ? 'SELESAI' : diff<0 ? 'TERLAMBAT ('+Math.abs(diff)+' hari)' : diff===0 ? 'HARI INI' : 'Belum ('+diff+' hari lagi)';
+    rows.push([
+      i+1,
+      t.task,
+      t.targetDate.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}),
+      status,
+      t.type.toUpperCase(),
+      t.znote
+    ]);
+  });
+
+  rows.push(['']);
+  rows.push(['=== SUMBER DATA ===']);
+  rows.push(['Jadwal Perawatan','Puslitkoka, BBPP Lembang, GAP Kopi Kementan RI']);
+  rows.push(['Data Cuaca','Open-Meteo (ECMWF/NOAA) \u2014 bersifat indikatif']);
+  rows.push(['Aplikasi','Talaga Hangsa KopiPlanPro v2.0']);
+  rows.push(['Disclaimer','Jadwal merupakan panduan umum, bukan pengganti penyuluh pertanian setempat']);
+
+  const csv = rows.map(row =>
+    row.map(cell => {
+      const s = String(cell==null?'':cell);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? '"'+s.replace(/"/g,'""')+'"'
+        : s;
+    }).join(',')
+  ).join('\n');
+
+  const bom = '\uFEFF';
+  const blob = new Blob([bom+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Laporan-Kebun-'+blok.nama.replace(/\s+/g,'-')+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Laporan CSV berhasil didownload!');
+  closeExportModal();
+}
+
+// ── EXPORT INFOGRAFIS (PNG via Canvas) ───────────────
+async function exportInfografis(blokId){
+  const blok = bloks.find(b=>b.id===blokId);
+  if(!blok) return;
+  showLoad('Membuat infografis...');
+
+  const tasks = generateTasks(blok);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.done).length;
+  const overdue = tasks.filter(t=>t.targetDate<today&&!t.done).length;
+  const upcoming7 = tasks.filter(t=>{ const d=Math.round((t.targetDate-today)/86400000); return d>=0&&d<=7&&!t.done; }).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const zona = getZona(blok.mdpl), z = getZL(zona);
+  const pctColor = pct>=75?'#4ade80':pct>=40?'#fbbf24':'#f87171';
+
+  const W=400, scale=2;
+  const typeGroups = ['pupuk','siram','gulma','pangkas','panen','wiwilan','drainase']
+    .map(t=>({t,tasks:tasks.filter(x=>x.type===t)}))
+    .filter(g=>g.tasks.length>0);
+  const H = 120 + 80 + 60 + 80 + 60 + (typeGroups.length*44) + 60 + 100 + 80 + 120;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W*scale; canvas.height = H*scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = '#0e1a0e';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = '#4ade80';
+  ctx.fillRect(0,0,W,4);
+
+  let y = 24;
+  ctx.fillStyle = 'rgba(74,222,128,0.06)';
+  ctx.fillRect(0, 0, W, 110);
+
+  ctx.fillStyle = 'rgba(74,222,128,0.15)';
+  roundRect(ctx, 20, y, 36, 36, 8); ctx.fill();
+  ctx.fillStyle = '#4ade80'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('TH', 38, y+23);
+
+  ctx.fillStyle = '#e8f0e8'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign='left';
+  ctx.fillText(blok.nama.length>20?blok.nama.substring(0,20)+'...':blok.nama, 64, y+14);
+  ctx.fillStyle = 'rgba(232,240,232,0.5)'; ctx.font = '10px sans-serif';
+  ctx.fillText(blok.lokasi+' \u00b7 '+blok.mdpl+' mdpl', 64, y+30);
+
+  const zBgColor = zona==='rendah'?'rgba(251,191,36,0.15)':zona==='menengah'?'rgba(74,222,128,0.12)':'rgba(96,165,250,0.12)';
+  const zTxtColor = zona==='rendah'?'#fbbf24':zona==='menengah'?'#4ade80':'#60a5fa';
+  ctx.fillStyle = zBgColor;
+  const zLabel = z.label;
+  ctx.font = 'bold 9px sans-serif'; ctx.textAlign='left';
+  const zW = ctx.measureText(zLabel).width + 14;
+  roundRect(ctx, 64, y+38, zW, 18, 99); ctx.fill();
+  ctx.fillStyle = zTxtColor; ctx.fillText(zLabel, 71, y+51);
+
+  ctx.fillStyle = 'rgba(232,240,232,0.3)'; ctx.font = '9px sans-serif'; ctx.textAlign='right';
+  ctx.fillText('Laporan: '+new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}), W-20, y+14);
+  ctx.fillText(blok.varietas+' \u00b7 '+blok.pupuk, W-20, y+28);
+
+  y = 90;
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(20,y,W-40,1);
+
+  y = 110;
+  ctx.fillStyle='rgba(255,255,255,0.03)';
+  roundRect(ctx,20,y,W-40,70,12); ctx.fill();
+
+  const R=24, cx=56, cy=y+35, C=2*Math.PI*R;
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=7;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle=pctColor; ctx.lineWidth=7;
+  ctx.beginPath(); ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+C*(pct/100)); ctx.stroke();
+  ctx.fillStyle=pctColor; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(pct+'%', cx, cy+5);
+
+  const stats2 = [
+    {n:done, l:'Selesai', c:'#4ade80'},
+    {n:overdue, l:'Terlambat', c:'#f87171'},
+    {n:upcoming7, l:'7 Hari Ini', c:'#fbbf24'},
+    {n:total-done-overdue-upcoming7, l:'Mendatang', c:'rgba(232,240,232,0.3)'}
+  ];
+  stats2.forEach((s,i)=>{
+    const sx = 100 + i*72;
+    ctx.fillStyle=s.c; ctx.font='bold 16px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(s.n, sx, y+30);
+    ctx.fillStyle='rgba(232,240,232,0.4)'; ctx.font='8.5px sans-serif';
+    ctx.fillText(s.l, sx, y+44);
+  });
+
+  y += 84;
+
+  ctx.fillStyle='rgba(232,240,232,0.6)'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('PROGRESS PER JENIS TUGAS', 20, y+4);
+  y += 16;
+
+  typeGroups.forEach(g=>{
+    const pp = Math.round(g.tasks.filter(t=>t.done).length/g.tasks.length*100);
+    const pc = pp>=75?'#4ade80':pp>=40?'#fbbf24':'#f87171';
+    const labels = {pupuk:'Pemupukan',siram:'Penyiraman',gulma:'Penyiangan',pangkas:'Pemangkasan',panen:'Panen',wiwilan:'Wiwilan',drainase:'Drainase'};
+    const label = labels[g.t]||g.t;
+
+    ctx.fillStyle='rgba(255,255,255,0.02)';
+    roundRect(ctx,20,y,W-40,34,8); ctx.fill();
+
+    ctx.fillStyle='rgba(232,240,232,0.65)'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(label, 32, y+15);
+    ctx.fillStyle='rgba(232,240,232,0.35)'; ctx.font='9px sans-serif';
+    ctx.fillText(g.tasks.filter(t=>t.done).length+'/'+g.tasks.length, 32, y+27);
+
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    roundRect(ctx, 130, y+10, W-160, 8, 99); ctx.fill();
+    const bw = Math.max(8,(W-160)*(pp/100));
+    ctx.fillStyle=pc;
+    roundRect(ctx, 130, y+10, bw, 8, 99); ctx.fill();
+    ctx.fillStyle=pc; ctx.font='bold 10px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(pp+'%', W-22, y+20);
+
+    y += 44;
+  });
+
+  y += 8;
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(20,y,W-40,1);
+  y += 16;
+
+  ctx.fillStyle='rgba(232,240,232,0.6)'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('TUGAS TERDEKAT', 20, y+4);
+  y += 16;
+
+  const upcoming = tasks
+    .filter(t=>!t.done)
+    .sort((a,b)=>a.targetDate-b.targetDate)
+    .slice(0,5);
+
+  if(upcoming.length===0){
+    ctx.fillStyle='rgba(74,222,128,0.6)'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('Semua tugas sudah selesai!', 20, y+14);
+    y += 30;
+  } else {
+    upcoming.forEach(t=>{
+      const diff2=Math.round((t.targetDate-today)/86400000);
+      const isOd=diff2<0;
+      const statusTxt=isOd?'Terlambat '+Math.abs(diff2)+' hr':diff2===0?'Hari ini':diff2+' hari lagi';
+      const statusColor=isOd?'#f87171':diff2===0?'#fbbf24':'rgba(232,240,232,0.4)';
+
+      ctx.fillStyle='rgba(255,255,255,0.02)';
+      roundRect(ctx,20,y,W-40,30,7); ctx.fill();
+
+      const accentColors={pupuk:'#4ade80',pangkas:'#22d3ee',panen:'#fbbf24',siram:'#60a5fa',drainase:'#a78bfa',gulma:'#fb7185',wiwilan:'#34d399'};
+      ctx.fillStyle=accentColors[t.type]||'#4ade80';
+      ctx.fillRect(20,y,3,30);
+
+      ctx.fillStyle='rgba(232,240,232,0.8)'; ctx.font='11px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(t.task.length>32?t.task.substring(0,32)+'...':t.task, 30, y+13);
+      ctx.fillStyle='rgba(232,240,232,0.35)'; ctx.font='9px sans-serif';
+      ctx.fillText(t.targetDate.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}), 30, y+25);
+      ctx.fillStyle=statusColor; ctx.textAlign='right';
+      ctx.fillText(statusTxt, W-22, y+19);
+      y += 34;
+    });
+  }
+
+  y += 8;
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(20,y,W-40,1);
+  y += 16;
+
+  ctx.fillStyle='rgba(232,240,232,0.6)'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('INFO KEBUN', 20, y+4);
+  y += 14;
+
+  const infos=[
+    ['Varietas', blok.varietas],
+    ['Metode Pupuk', blok.pupuk],
+    ['Musim/Cuaca', blok.cuaca],
+    ['Tanggal Tanam', new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})],
+    ['Jumlah Pohon', parseInt(blok.pohon).toLocaleString('id-ID')+' pohon'],
+  ];
+  infos.forEach((info,i)=>{
+    const ix = i%2===0 ? 20 : W/2+5;
+    const iy = y + Math.floor(i/2)*24;
+    ctx.fillStyle='rgba(232,240,232,0.4)'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(info[0].toUpperCase(), ix, iy+10);
+    ctx.fillStyle='rgba(232,240,232,0.85)'; ctx.font='bold 11px sans-serif';
+    ctx.fillText(info[1], ix, iy+22);
+  });
+  y += Math.ceil(infos.length/2)*24+12;
+
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(0,y,W,1); y+=16;
+  ctx.fillStyle='rgba(74,222,128,0.15)';
+  roundRect(ctx,20,y,W-40,60,12); ctx.fill();
+  ctx.fillStyle='rgba(232,240,232,0.5)'; ctx.font='9.5px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Sumber: Puslitkoka, BBPP Lembang, Kementan RI', 32, y+18);
+  ctx.fillText('Cuaca: Open-Meteo (ECMWF/NOAA) \u2014 bersifat indikatif', 32, y+32);
+  ctx.fillText('Jadwal adalah panduan umum, bukan pengganti penyuluh setempat', 32, y+46);
+  ctx.fillStyle='rgba(74,222,128,0.6)'; ctx.font='bold 9px sans-serif'; ctx.textAlign='right';
+  ctx.fillText('Talaga Hangsa KopiPlanPro', W-22, y+18);
+  ctx.fillStyle='rgba(232,240,232,0.25)'; ctx.font='8.5px sans-serif';
+  ctx.fillText('wonderpic.github.io/kebunkopi', W-22, y+32);
+
+  hideLoad();
+
+  canvas.toBlob(blob=>{
+    if(!blob){ toast('Gagal buat infografis'); return; }
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='Infografis-'+blok.nama.replace(/\s+/g,'-')+'-'+new Date().toISOString().split('T')[0]+'.png';
+    a.click();
+    toast('Infografis berhasil didownload!');
+    closeExportModal();
+  },'image/png',0.95);
+}
+
+// ── EXPORT TEXT ───────────────────────────────────────
+function exportText(blokId){
+  const blok = bloks.find(b=>b.id===blokId);
+  if(!blok) return;
+  const tasks = generateTasks(blok);
+  tasks.sort((a,b)=>a.targetDate-b.targetDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const done = tasks.filter(t=>t.done).length;
+  const overdue = tasks.filter(t=>t.targetDate<today&&!t.done).length;
+  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  const z = getZL(getZona(blok.mdpl));
+
+  let txt = '';
+  txt += '========================================\n';
+  txt += '   LAPORAN KEBUN KOPI\n';
+  txt += '   Talaga Hangsa KopiPlanPro\n';
+  txt += '========================================\n\n';
+  txt += 'Dibuat: '+new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'\n\n';
+
+  txt += 'DATA KEBUN\n';
+  txt += '----------------------------------------\n';
+  txt += 'Nama Blok    : '+blok.nama+'\n';
+  txt += 'Lokasi       : '+blok.lokasi+'\n';
+  txt += 'Ketinggian   : '+blok.mdpl+' mdpl\n';
+  txt += 'Zona         : '+z.label+'\n';
+  txt += 'Varietas     : '+blok.varietas+'\n';
+  txt += 'Metode Pupuk : '+blok.pupuk+'\n';
+  txt += 'Cuaca/Musim  : '+blok.cuaca+'\n';
+  txt += 'Tanggal Tanam: '+new Date(blok.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+'\n';
+  txt += 'Jumlah Pohon : '+parseInt(blok.pohon).toLocaleString('id-ID')+' pohon\n';
+  if(blok.lat&&blok.lon) txt += 'Koordinat GPS: '+blok.lat.toFixed(5)+', '+blok.lon.toFixed(5)+'\n';
+  txt += '\n';
+
+  txt += 'RINGKASAN PROGRESS\n';
+  txt += '----------------------------------------\n';
+  txt += 'Total Tugas  : '+tasks.length+'\n';
+  txt += 'Selesai      : '+done+' ('+pct+'%)\n';
+  txt += 'Terlambat    : '+overdue+'\n';
+  txt += 'Belum Mulai  : '+(tasks.length-done-overdue)+'\n\n';
+
+  const typeMap={pupuk:'PEMUPUKAN',siram:'PENYIRAMAN',gulma:'PENYIANGAN GULMA',pangkas:'PEMANGKASAN',panen:'PANEN',wiwilan:'WIWILAN',drainase:'DRAINASE'};
+  Object.keys(typeMap).forEach(tp=>{
+    const tList=tasks.filter(t=>t.type===tp);
+    if(!tList.length) return;
+    const tdone=tList.filter(t=>t.done).length;
+    txt += typeMap[tp]+' ('+tdone+'/'+tList.length+')\n';
+    tList.forEach(t=>{
+      const diff=Math.round((t.targetDate-today)/86400000);
+      const status=t.done?'[SELESAI]':diff<0?'[TERLAMBAT '+Math.abs(diff)+' hr]':diff===0?'[HARI INI]':'['+diff+' hari lagi]';
+      txt += '  '+status+' '+t.targetDate.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' \u2014 '+t.task+'\n';
+    });
+    txt += '\n';
+  });
+
+  txt += 'CATATAN PENTING\n';
+  txt += '----------------------------------------\n';
+  txt += 'Jadwal ini disusun berdasarkan panduan\n';
+  txt += 'ilmiah Puslitkoka, BBPP Lembang, dan\n';
+  txt += 'Kementan RI. Merupakan panduan umum,\n';
+  txt += 'bukan pengganti penyuluh pertanian.\n\n';
+  txt += 'Data cuaca dari Open-Meteo bersifat\n';
+  txt += 'indikatif. Selalu cek kondisi lapangan.\n\n';
+  txt += '-- Talaga Hangsa KopiPlanPro --\n';
+  txt += 'wonderpic.github.io/kebunkopi\n';
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Laporan-'+blok.nama.replace(/\s+/g,'-')+'-'+new Date().toISOString().split('T')[0]+'.txt';
+  a.click();
+  toast('Laporan teks berhasil didownload!');
+  closeExportModal();
+}
+
 // ── INIT ──────────────────────────────────────────────
 document.getElementById('f_tgl').value=new Date().toISOString().split('T')[0];
+document.getElementById('btnOnboardingOK').addEventListener('click', dismissOnboarding);
+document.getElementById('btnCloseExport').addEventListener('click', closeExportModal);
+document.getElementById('exportModal').addEventListener('click', e=>{ if(e.target===document.getElementById('exportModal')) closeExportModal(); });
+document.getElementById('btnExportSheet').addEventListener('click', ()=>exportCSV(_exportBlokId));
+document.getElementById('btnExportInfografis').addEventListener('click', ()=>exportInfografis(_exportBlokId));
+document.getElementById('btnExportText').addEventListener('click', ()=>exportText(_exportBlokId));
 
 // Update Firebase rules reminder (in console)
 console.log('%c KopiPlanPro v2.0 loaded', 'color:#4ade80;font-weight:bold;font-size:14px');
