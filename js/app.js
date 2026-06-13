@@ -1831,6 +1831,12 @@ function drawPhotoBg(ctx,W,H){
 
 function roundRect(ctx,x,y,w,h,r){
   if(typeof r==='number') r=[r,r,r,r];
+  // CRITICAL FIX: cap radius so it never exceeds half of width/height.
+  // Oversized radii (e.g. 99 for pill shapes on a thin bar) make the
+  // bezier/quadratic curves overshoot and self-intersect, producing
+  // a "bowtie/star" fill artifact (the pink glitch).
+  const maxR = Math.max(0, Math.min(w, h) / 2);
+  r = r.map(v => Math.max(0, Math.min(v, maxR)));
   ctx.beginPath();
   ctx.moveTo(x+r[0],y);
   ctx.lineTo(x+w-r[1],y); ctx.quadraticCurveTo(x+w,y,x+w,y+r[1]);
