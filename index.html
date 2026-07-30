@@ -7,7 +7,487 @@
 <meta name="description" content="Asisten Digital Perawatan Kebun Kopi — Talaga Hangsa">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KopiPlanPro"><!DOCTYPE html>
+<html lang="id">
+<head>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H9P03C8S4D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-H9P03C8S4D');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#0e1a0e">
+<meta name="description" content="Asisten Digital Perawatan Kebun Kopi — Talaga Hangsa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="KopiPlanPro">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./assets/logo.png">
+<link rel="icon" href="./assets/logo.png">
+<title>Talaga Hangsa KopiPlanPro</title>
+<link rel="stylesheet" href="./css/style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Memuat...</div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:flex;">
+  <div class="splash-logo"><img id="logoSplash" src="./assets/logo.png" alt="Talaga Hangsa"></div>
+  <div class="splash-title">Talaga Hangsa <span>KopiPlanPro</span></div>
+  <div class="splash-sub">Asisten Digital Perawatan Kebun Kopi</div>
+  <div class="splash-divider"></div>
+  <div class="mode-selector" id="modeSelector">
+    <div class="mode-title">Masuk Sebagai</div>
+    <button class="mode-btn mode-btn-owner" id="btnOwner" type="button">
+      <div class="mode-icon mode-icon-owner">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0116 0v1"/>
+          <polyline points="15 11 17 13 21 9" stroke="#fbbf24" stroke-width="2.2"/>
+        </svg>
+      </div>
+      <div class="mode-btn-text">
+        <span class="mode-btn-label">Pemilik Kebun</span>
+        <span class="mode-btn-desc">Login Google · Pantau semua kebun</span>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="mode-btn mode-btn-farmer" id="btnFarmer" type="button">
+      <div class="mode-icon mode-icon-farmer">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2C8 2 4 5.5 4 10c0 3 1.5 5.5 4 7v2a1 1 0 001 1h6a1 1 0 001-1v-2c2.5-1.5 4-4 4-7 0-4.5-4-8-8-8z"/>
+          <line x1="12" y1="2" x2="12" y2="10"/>
+          <path d="M8.5 7c1 1.5 2 2.5 3.5 3"/>
+        </svg>
+      </div>
+      <div class="mode-btn-text">
+        <span class="mode-btn-label">Petani</span>
+        <span class="mode-btn-desc">Masukkan kode kebun · Lihat tugas</span>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div class="kode-screen" id="kodeScreen">
+    <button class="kode-back" id="btnKodeBack" type="button">← Kembali</button>
+    <div class="kode-title">Kode Kebun</div>
+    <div class="kode-sub">Minta kode 6 digit dari pemilik kebun Anda.</div>
+    <input class="kode-input" id="kodeInput" type="text" maxlength="6" placeholder="· · · · · ·" autocomplete="off">
+    <div class="kode-error" id="kodeError">Kode tidak ditemukan. Tanyakan ke pemilik kebun.</div>
+    <button class="kode-btn" id="btnMasukKode" type="button">Masuk ke Kebun →</button>
+  </div>
+</div>
+
+<!-- OWNER APP — Dark Elegant -->
+<div class="app" id="ownerApp" style="display:none;">
+  <div class="owner-hdr">
+    <div class="owner-hdr-top">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="owner-logo-wrap"><img id="logoOwner" src="./assets/logo.png" alt="TH"></div>
+        <div class="owner-app-name">Talaga Hangsa <span>KopiPlanPro</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="owner-user-pill">
+          <div class="owner-avatar" id="ownerAvatar">U</div>
+          <span class="owner-uname" id="ownerName">-</span>
+        </div>
+        <button id="btnLogout" type="button" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer;font-family:inherit;white-space:nowrap;">Keluar</button>
+      </div>
+    </div>
+  </div>
+  <nav class="owner-nav">
+    <button class="onb active" data-tab="kebun" type="button">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 2C8 2 4 5.5 4 10c0 3 1.5 5.5 4 7v2a1 1 0 001 1h6a1 1 0 001-1v-2c2.5-1.5 4-4 4-7 0-4.5-4-8-8-8z"/><line x1="12" y1="2" x2="12" y2="10"/><path d="M8 7c1 1.5 2.5 2.5 4 3"/></svg></span>Data Kebun
+    </button>
+    <button class="onb" data-tab="jadwal" type="button">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg></span>Jadwal Kerja
+    </button>
+    <button class="onb" data-tab="status" type="button">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 4-6"/><circle cx="7" cy="16" r="1.2" fill="currentColor"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/><circle cx="15" cy="14" r="1.2" fill="currentColor"/><circle cx="19" cy="8" r="1.2" fill="currentColor"/></svg></span>Status Kebun
+    </button>
+    <button class="onb" data-tab="tambah" type="button">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Tambah Blok
+    </button>
+  </nav>
+  <div class="owner-cnt">
+    <!-- DATA KEBUN -->
+    <div id="tab-kebun" class="otp active">
+      <div class="o-sbar" id="statsBar"></div>
+      <div id="pohonBreakdown"></div>
+      <div class="osec">Blok Kebun Aktif</div>
+      <div id="kebunList"></div>
+    </div>
+    <!-- JADWAL KERJA -->
+    <div id="tab-jadwal" class="otp">
+      <div class="osec">Jadwal Kerja</div>
+      <div class="o-snote"><strong>📚 Basis ilmiah:</strong> Puslitkoka, BBPP Lembang, GAP Kementan RI — disesuaikan zona ketinggian + cuaca real-time.</div>
+      <div id="jadwalWeatherBar" class="weather-bar" style="margin-bottom:10px;"></div>
+      <div id="jadwalWeatherRec"></div>
+      <div class="picker-label">Pilih Kebun</div>
+      <div class="picker-scroll" id="kebunPicker"></div>
+      <div class="o-sfilt">
+        <button class="o-fc active" data-filter="semua" type="button">Semua</button>
+        <button class="o-fc" data-filter="pupuk" type="button">🍃 Pupuk</button>
+        <button class="o-fc" data-filter="siram" type="button">💧 Siram</button>
+        <button class="o-fc" data-filter="gulma" type="button">🌾 Gulma</button>
+        <button class="o-fc" data-filter="pangkas" type="button">✂️ Pangkas</button>
+        <button class="o-fc" data-filter="panen" type="button">☕ Panen</button>
+      </div>
+      <div id="jadwalList"></div>
+    </div>
+    <!-- STATUS VISUAL -->
+    <div id="tab-status" class="otp">
+      <div class="osec">Status Kebun Visual</div>
+      <div class="bsel-scroll" id="statusPicker"></div>
+      <div id="statusVis"></div>
+    </div>
+    <!-- TAMBAH BLOK -->
+    <div id="tab-tambah" class="otp">
+      <div class="osec">Tambah Blok Baru</div>
+      <div class="o-fcard">
+        <div class="o-fg"><label class="o-fl">Nama Blok</label><input class="o-fi" id="f_nama" type="text" placeholder="cth: Blok Utara A"></div>
+        <div class="o-fr">
+          <div class="o-fg"><label class="o-fl">Lokasi (Kota)</label>
+            <input class="o-fi" id="f_lokasi" type="text" placeholder="cth: Bandung">
+            <button type="button" id="btnDetectGPS" style="margin-top:6px;width:100%;padding:10px 13px;border:1px solid rgba(74,222,128,0.25);border-radius:10px;background:rgba(74,222,128,0.05);color:rgba(232,240,232,0.7);font-family:inherit;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg>
+              <span>Tentukan Koordinat Kebun (GPS / Cari / Manual)</span>
+            </button>
+            <div id="f_gps_info" style="display:none;font-size:10.5px;margin-top:4px;padding:5px 10px;border-radius:7px;background:rgba(74,222,128,0.06);color:#4ade80;"></div>
+          </div>
+          <div class="o-fg"><label class="o-fl">Ketinggian (mdpl)</label><input class="o-fi" id="f_mdpl" type="number" placeholder="1200" min="0" max="3000">
+            <div class="o-zprev" id="zonaP"></div></div>
+        </div>
+        <div class="o-fg"><label class="o-fl">Varietas</label>
+          <div class="o-tg"><div class="o-to selected" data-f="varietas" data-v="Arabika">🌿 Arabika</div><div class="o-to" data-f="varietas" data-v="Robusta">🌱 Robusta</div></div></div>
+        <div class="o-fg"><label class="o-fl">Metode Pupuk</label>
+          <div class="o-tg"><div class="o-to selected" data-f="pupuk" data-v="Organik">🍃 Organik</div><div class="o-to" data-f="pupuk" data-v="Kimia">⚗️ Kimia</div></div></div>
+        <div class="o-fg"><label class="o-fl">Kondisi Cuaca (Musim)</label>
+          <div class="o-tg"><div class="o-to selected" data-f="cuaca" data-v="Kemarau">☀️ Kemarau</div><div class="o-to" data-f="cuaca" data-v="Hujan">🌧️ Hujan</div></div></div>
+        <div class="o-fr">
+          <div class="o-fg"><label class="o-fl">Tanggal Tanam</label><input class="o-fi" id="f_tgl" type="date"></div>
+          <div class="o-fg"><label class="o-fl">Jumlah Pohon</label><input class="o-fi" id="f_pohon" type="number" placeholder="150" min="1"></div>
+        </div>
+        <div class="o-fg">
+          <label class="o-fl">Foto Cover Kebun (Opsional)</label>
+          <button type="button" id="btnAddCover" style="width:100%;padding:11px 13px;border:1.5px dashed rgba(74,222,128,0.3);border-radius:12px;background:rgba(74,222,128,0.04);color:var(--owner-text2);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">📷</span>
+            <span id="f_cover_label">Tambah Foto Cover Kebun</span>
+          </button>
+          <input type="file" id="f_cover_input" accept="image/*" style="display:none;">
+          <div id="f_cover_preview" style="display:none;margin-top:8px;position:relative;height:90px;border-radius:10px;overflow:hidden;">
+            <img id="f_cover_img" style="width:100%;height:100%;object-fit:cover;">
+            <button type="button" id="btnRemoveCover" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:6px;padding:3px 7px;font-size:10px;cursor:pointer;">✕ Hapus</button>
+          </div>
+        </div>
+        <button class="o-sbtn" id="btnTambah" type="button">➕ Simpan Blok</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FARMER APP — Clean Bright -->
+<div class="app" id="farmerApp" style="display:none;">
+  <div class="farmer-cover">
+    <img id="farmerCoverImg" class="farmer-cover-img" src="" alt="Cover Kebun">
+    <div class="farmer-cover-overlay"></div>
+    <div class="farmer-cover-content">
+      <div class="farmer-cover-info">
+        <div class="farmer-kebun-name" id="farmerKebunName">-</div>
+        <div class="farmer-kebun-loc" id="farmerKebunLoc">-</div>
+      </div>
+      <label class="farmer-cover-upload" id="btnFarmerUploadCover" title="Ganti foto cover">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M20 4h-3.5l-1-2h-7l-1 2H4a2 2 0 00-2 2v13a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/></svg>
+        <input type="file" id="farmerCoverInput" accept="image/*" style="display:none;">
+      </label>
+    </div>
+  </div>
+  <div class="farmer-info-bar">
+    <div class="farmer-status-row">
+      <div class="farmer-sync-dot"></div>
+      <span class="farmer-sync-text">Terhubung ke data kebun</span>
+    </div>
+    <button class="farmer-logout-btn" id="btnFarmerLogout" type="button">Keluar</button>
+  </div>
+  <div class="farmer-cnt">
+    <div class="farmer-today">
+      <div class="farmer-today-label">Hari ini</div>
+      <div class="farmer-today-date" id="farmerTodayDate"></div>
+      <div class="farmer-today-count" id="farmerTodayCount"></div>
+    </div>
+    <div class="farmer-weather" id="farmerWeatherCard">
+      <div class="farmer-weather-icon" id="farmerWeatherIcon">🌡️</div>
+      <div class="farmer-weather-info">
+        <div class="farmer-weather-main" id="farmerWeatherMain">Memuat cuaca...</div>
+        <div class="farmer-weather-detail" id="farmerWeatherDetail"></div>
+        <span class="farmer-weather-rec" id="farmerWeatherRec" style="display:none;"></span>
+      </div>
+    </div>
+    <div class="f-sec">Jadwal Tugas</div>
+    <div class="f-sfilt" id="farmerFilt">
+      <button class="f-fc active" data-filter="semua" type="button">Semua</button>
+      <button class="f-fc" data-filter="pupuk" type="button">🍃 Pupuk</button>
+      <button class="f-fc" data-filter="siram" type="button">💧 Siram</button>
+      <button class="f-fc" data-filter="gulma" type="button">🌾 Gulma</button>
+      <button class="f-fc" data-filter="pangkas" type="button">✂️ Pangkas</button>
+      <button class="f-fc" data-filter="panen" type="button">☕ Panen</button>
+    </div>
+    <div id="farmerJadwal"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-ov" id="editModal">
+  <div class="modal-sh">
+    <div class="m-handle"></div>
+    <div class="m-title">Edit Blok Kebun</div>
+    <input type="hidden" id="e_id">
+    <div class="o-fg"><label class="o-fl">Nama Blok</label><input class="o-fi" id="e_nama" type="text"></div>
+    <div class="o-fr">
+      <div class="o-fg"><label class="o-fl">Lokasi</label>
+        <input class="o-fi" id="e_lokasi" type="text">
+        <button type="button" id="btnDetectGPSEdit" style="margin-top:6px;width:100%;padding:10px 13px;border:1px solid rgba(74,222,128,0.25);border-radius:10px;background:rgba(74,222,128,0.05);color:rgba(232,240,232,0.7);font-family:inherit;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg>
+          <span>Tentukan Koordinat Kebun (GPS / Cari / Manual)</span>
+        </button>
+        <div id="e_gps_info" style="display:none;font-size:10.5px;margin-top:4px;padding:5px 10px;border-radius:7px;background:rgba(74,222,128,0.06);color:#4ade80;"></div>
+      </div>
+      <div class="o-fg"><label class="o-fl">Ketinggian (mdpl)</label><input class="o-fi" id="e_mdpl" type="number" min="0" max="3000">
+        <div class="o-zprev" id="zonaPE"></div></div>
+    </div>
+    <div class="o-fg"><label class="o-fl">Varietas</label>
+      <div class="o-tg"><div class="o-to" data-f="e_varietas" data-v="Arabika">🌿 Arabika</div><div class="o-to" data-f="e_varietas" data-v="Robusta">🌱 Robusta</div></div></div>
+    <div class="o-fg"><label class="o-fl">Metode Pupuk</label>
+      <div class="o-tg"><div class="o-to" data-f="e_pupuk" data-v="Organik">🍃 Organik</div><div class="o-to" data-f="e_pupuk" data-v="Kimia">⚗️ Kimia</div></div></div>
+    <div class="o-fg"><label class="o-fl">Kondisi Cuaca</label>
+      <div class="o-tg"><div class="o-to" data-f="e_cuaca" data-v="Kemarau">☀️ Kemarau</div><div class="o-to" data-f="e_cuaca" data-v="Hujan">🌧️ Hujan</div></div></div>
+    <div class="o-fr">
+      <div class="o-fg"><label class="o-fl">Tanggal Tanam</label><input class="o-fi" id="e_tgl" type="date"></div>
+      <div class="o-fg"><label class="o-fl">Jumlah Pohon</label><input class="o-fi" id="e_pohon" type="number" min="1"></div>
+    </div>
+    <div class="o-fg" style="margin-top:4px;">
+      <label class="o-fl">Foto Cover Kebun</label>
+      <button type="button" id="btnEditCover" style="width:100%;padding:10px 13px;border:1.5px dashed rgba(74,222,128,0.3);border-radius:12px;background:rgba(74,222,128,0.04);color:var(--owner-text2);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">📷</span>
+        <span id="e_cover_label">Ganti Foto Cover</span>
+      </button>
+      <input type="file" id="e_cover_input" accept="image/*" style="display:none;">
+      <div id="e_cover_preview" style="display:none;margin-top:8px;position:relative;height:90px;border-radius:10px;overflow:hidden;">
+        <img id="e_cover_img" style="width:100%;height:100%;object-fit:cover;">
+        <button type="button" id="btnRemoveEditCover" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:6px;padding:3px 7px;font-size:10px;cursor:pointer;">✕ Hapus</button>
+      </div>
+    </div>
+    <button class="o-sbtn" id="btnSimpanEdit" type="button" style="background:linear-gradient(135deg,#1d4ed8,#2563eb);">💾 Simpan Perubahan</button>
+    <button class="m-bbtn" id="btnBatalEdit" type="button">Batal</button>
+  </div>
+</div>
+
+<!-- FOTO MODAL -->
+<div class="foto-modal-ov" id="fotoModalOv">
+  <img id="fotoModalImg" class="foto-modal-img" src="" alt="Bukti Kerja">
+  <div id="fotoModalInfo" class="foto-modal-info"></div>
+  <div style="display:flex;gap:10px;">
+    <button class="foto-modal-close" id="fotoModalClose" type="button">✕ Tutup</button>
+    <button class="foto-modal-del" id="fotoModalDel" style="display:none;" type="button">🗑️ Hapus</button>
+  </div>
+</div>
+
+<!-- FOTO PROMPT (Farmer) -->
+<div class="foto-prompt-ov" id="fotoPromptOv">
+  <div class="foto-prompt-sh">
+    <div style="width:36px;height:4px;background:#e5e7eb;border-radius:99px;margin:0 auto 16px;"></div>
+    <div class="fp-title">✅ Tugas Selesai?</div>
+    <div class="fp-sub">Tandai tugas ini selesai.<br>Tambah foto bukti agar pemilik bisa memantau.</div>
+    <button class="fp-btn-green" id="btnDoneWithFoto" type="button">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M20 4h-3.5l-1-2h-7l-1 2H4a2 2 0 00-2 2v13a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/></svg>
+      Selesai + Ambil Foto Bukti
+    </button>
+    <button class="fp-btn-outline" id="btnDoneOnly" type="button">✅ Selesai Tanpa Foto</button>
+    <button class="fp-btn-cancel" id="btnCancelDone" type="button">Batal</button>
+  </div>
+</div>
+
+<!-- COVER PAGE MODAL -->
+<div class="cover-modal-ov" id="coverModal">
+  <div class="cover-card">
+    <div class="cover-card-photo" id="coverCardPhoto">
+      <div class="cover-card-photo-overlay"></div>
+    </div>
+    <button class="cover-upload-area" id="coverUploadBtn" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M20 4h-3.5l-1-2h-7l-1 2H4a2 2 0 00-2 2v13a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/></svg>
+      Ganti Foto
+    </button>
+    <div class="cover-card-body">
+      <div class="cover-card-name" id="coverCardName">-</div>
+      <div class="cover-card-sub" id="coverCardSub">-</div>
+      <div class="cover-stats-row" id="coverStatsRow"></div>
+      <div class="cover-progress">
+        <div class="cover-progress-ring" id="coverProgressRing"></div>
+        <div class="cover-progress-info">
+          <div class="cover-progress-label" id="coverProgressLabel"></div>
+          <div class="cover-progress-pct" id="coverProgressPct"></div>
+        </div>
+      </div>
+      <div class="cover-badge-row" id="coverBadges"></div>
+      <div class="cover-branding">
+        <div class="cover-branding-name">Talaga Hangsa <span>KopiPlanPro</span></div>
+        <div class="cover-url">wonderpic.github.io/kebunkopi</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-actions">
+    <button class="cover-share-btn" id="btnShareCover" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share ke Medsos
+    </button>
+    <button class="cover-close-btn" id="btnCloseCover" type="button">✕ Tutup</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ONBOARDING DISCLAIMER -->
+<div id="onboardingScreen" style="display:none;position:fixed;inset:0;z-index:700;background:#0e1a0e;overflow-y:auto;flex-direction:column;align-items:center;justify-content:flex-start;padding:0;">
+  <div style="width:100%;max-width:430px;min-height:100vh;display:flex;flex-direction:column;">
+    <div style="background:linear-gradient(180deg,rgba(0,0,0,0.4),transparent);padding:48px 24px 24px;text-align:center;position:relative;">
+      <div style="position:absolute;inset:0;background:url('./assets/bg.jpg') top center/cover no-repeat;opacity:0.12;pointer-events:none;"></div>
+      <div style="position:relative;z-index:1;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#fff;margin:0 auto 14px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+          <img src="./assets/logo.png" style="width:100%;height:100%;object-fit:contain;">
+        </div>
+        <div style="font-family:serif;font-size:22px;font-weight:700;color:#fff;">Talaga Hangsa</div>
+        <div style="font-size:13px;color:#fbbf24;font-style:italic;margin-top:2px;">KopiPlanPro</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;">Asisten Digital Perawatan Kebun Kopi</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:24px 20px 32px;">
+      <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.15);border-radius:16px;padding:18px;margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:700;color:#4ade80;margin-bottom:8px;">Halo, Selamat Datang!</div>
+        <div style="font-size:13px;color:rgba(232,240,232,0.8);line-height:1.7;">
+          KopiPlanPro hadir untuk membantu Anda merawat kebun kopi dengan lebih terencana dan ilmiah. Sebelum mulai, ada beberapa hal penting yang perlu Anda tahu.
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,222,128,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#e8f0e8;">Jadwal Perawatan</div>
+        </div>
+        <div style="font-size:12.5px;color:rgba(232,240,232,0.65);line-height:1.75;">
+          Semua jadwal di aplikasi ini <span style="color:#4ade80;font-weight:600;">disusun berdasarkan panduan ilmiah</span> dari Puslitkoka, BBPP Lembang, dan Kementerian Pertanian RI.<br><br>
+          Jadwal ini adalah <span style="color:#fbbf24;">panduan umum</span> — kondisi nyata tiap kebun bisa berbeda tergantung jenis tanah, naungan, dan varietas lokal. Selalu sesuaikan dengan pengamatan langsung di lapangan ya!
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🌤️</div>
+          <div style="font-size:14px;font-weight:700;color:#e8f0e8;">Data Cuaca Real-time</div>
+        </div>
+        <div style="font-size:12.5px;color:rgba(232,240,232,0.65);line-height:1.75;">
+          Cuaca diambil otomatis dari <span style="color:#60a5fa;font-weight:600;">Open-Meteo</span> — layanan cuaca internasional dari ECMWF dan NOAA. Makin akurat kalau Anda sudah mengisi koordinat GPS kebun yang tepat.<br><br>
+          Rekomendasi cuaca bersifat <span style="color:#fbbf24;">indikatif</span> — bukan data BMKG lokal. Gunakan sebagai petunjuk awal, bukan keputusan akhir.
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(251,191,36,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🔒</div>
+          <div style="font-size:14px;font-weight:700;color:#e8f0e8;">Data Kebun Anda</div>
+        </div>
+        <div style="font-size:12.5px;color:rgba(232,240,232,0.65);line-height:1.75;">
+          Data kebun disimpan di <span style="color:#fbbf24;font-weight:600;">akun Firebase</span> yang terhubung dengan login Google Anda. Talaga Hangsa tidak mengakses atau menjual data kebun Anda.<br><br>
+          URL aplikasi ini aman dibagikan — orang lain yang membukanya tidak akan langsung melihat data kebun Anda.
+        </div>
+      </div>
+      <div style="background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.15);border-radius:14px;padding:16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚠️</div>
+          <div style="font-size:14px;font-weight:700;color:#e8f0e8;">Penting Diingat</div>
+        </div>
+        <div style="font-size:12.5px;color:rgba(232,240,232,0.65);line-height:1.75;">
+          KopiPlanPro adalah <span style="color:#f87171;font-weight:600;">alat bantu</span>, bukan pengganti penyuluh pertanian. Untuk keputusan besar seperti penanganan hama serius atau perubahan metode tanam, selalu konsultasikan dengan ahli pertanian setempat.<br><br>
+          Talaga Hangsa tidak bertanggung jawab atas kerugian yang timbul akibat keputusan yang diambil semata-mata berdasarkan aplikasi ini.
+        </div>
+      </div>
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:10px;color:rgba(232,240,232,0.25);letter-spacing:0.5px;">KopiPlanPro v2.0 · 2026 · Talaga Hangsa</div>
+        <div style="font-size:10px;color:rgba(232,240,232,0.2);margin-top:3px;">From Soil to Soul</div>
+      </div>
+      <button id="btnOnboardingOK" type="button" style="width:100%;padding:16px;background:linear-gradient(135deg,#16a34a,#4ade80);color:#0e1a0e;border:none;border-radius:14px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
+        Saya Mengerti, Mulai Gunakan App →
+      </button>
+      <div style="text-align:center;margin-top:10px;">
+        <span style="font-size:10.5px;color:rgba(232,240,232,0.25);">Dengan melanjutkan, Anda menyetujui ketentuan penggunaan ini</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT REPORT MODAL -->
+<div id="exportModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;display:none;align-items:flex-end;justify-content:center;">
+  <div style="background:#162016;border-radius:20px 20px 0 0;border:1px solid rgba(74,222,128,0.15);width:100%;max-width:430px;padding:20px 18px 36px;max-height:80vh;overflow-y:auto;animation:slideUp 0.25s ease;">
+    <div style="width:36px;height:3px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto 16px;"></div>
+    <div style="font-size:16px;font-weight:700;color:#e8f0e8;margin-bottom:4px;">Export Laporan Kebun</div>
+    <div style="font-size:11.5px;color:rgba(232,240,232,0.45);margin-bottom:20px;" id="exportBlokName">-</div>
+    <button id="btnExportSheet" type="button" style="width:100%;padding:14px 16px;margin-bottom:10px;border:1px solid rgba(74,222,128,0.2);border-radius:12px;background:rgba(74,222,128,0.05);color:#e8f0e8;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+      <div style="width:40px;height:40px;border-radius:11px;background:rgba(74,222,128,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;">Laporan Sheet (CSV)</div>
+        <div style="font-size:10.5px;color:rgba(232,240,232,0.45);margin-top:2px;">Data lengkap · Bisa dibuka di Excel / Google Sheets</div>
+      </div>
+    </button>
+    <button id="btnExportInfografis" type="button" style="width:100%;padding:14px 16px;margin-bottom:10px;border:1px solid rgba(96,165,250,0.2);border-radius:12px;background:rgba(96,165,250,0.04);color:#e8f0e8;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+      <div style="width:40px;height:40px;border-radius:11px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          <path d="M7 6h.01M12 6h.01"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;">Infografis Visual (PNG)</div>
+        <div style="font-size:10.5px;color:rgba(232,240,232,0.45);margin-top:2px;">Ringkasan visual · Siap share atau cetak</div>
+      </div>
+    </button>
+    <button id="btnExportText" type="button" style="width:100%;padding:14px 16px;margin-bottom:20px;border:1px solid rgba(251,191,36,0.2);border-radius:12px;background:rgba(251,191,36,0.04);color:#e8f0e8;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;">
+      <div style="width:40px;height:40px;border-radius:11px;background:rgba(251,191,36,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="16" y1="9" x2="8" y2="9"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;">Laporan Teks Lengkap (TXT)</div>
+        <div style="font-size:10.5px;color:rgba(232,240,232,0.45);margin-top:2px;">Semua data + rekomendasi · Bisa copy-paste ke WA</div>
+      </div>
+    </button>
+    <button id="btnCloseExport" type="button" style="width:100%;padding:11px;background:none;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(232,240,232,0.35);font-family:inherit;font-size:13px;cursor:pointer;">Tutup</button>
+  </div>
+</div>
+
+<script src="./js/app.js"></script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js')
+    .catch(e=>console.log('SW:',e));
+}
+</script>
+
+</body>
+</html>
+
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./assets/logo.png">
 <link rel="icon" href="./assets/logo.png">
