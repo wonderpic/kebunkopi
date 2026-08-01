@@ -350,13 +350,45 @@ function showModeSelector(){
   document.getElementById('kodeError').style.display='none';
   document.getElementById('kodeInput').value='';
 }
+// Rate limiting state for kode input
+const _kodeAttempts = { count: 0, lockedUntil: 0 };
+
 async function masukKode(){
+  // Check rate limit
+  const now = Date.now();
+  if(_kodeAttempts.lockedUntil > now){
+    const sisa = Math.ceil((_kodeAttempts.lockedUntil - now)/1000);
+    document.getElementById('kodeError').textContent = 'Terlalu banyak percobaan. Coba lagi dalam '+sisa+' detik.';
+    document.getElementById('kodeError').style.display='block';
+    return;
+  }
+
   const kode=document.getElementById('kodeInput').value.trim().toUpperCase();
   if(kode.length<4){ toast('Kode minimal 4 karakter'); return; }
+  if(kode.length>6){ toast('Kode maksimal 6 karakter'); return; }
+  // Only alphanumeric allowed
+  if(!/^[A-Z0-9]+$/.test(kode)){ toast('Kode hanya boleh huruf dan angka'); return; }
+
   showLoad('Mencari kebun...');
   try{
     const snap=await db.ref('bloks').orderByChild('kode').equalTo(kode).once('value');
-    if(!snap.exists()){ hideLoad(); document.getElementById('kodeError').style.display='block'; return; }
+    if(!snap.exists()){
+      hideLoad();
+      _kodeAttempts.count++;
+      if(_kodeAttempts.count >= 5){
+        _kodeAttempts.lockedUntil = Date.now() + 60000; // lock 60 detik
+        _kodeAttempts.count = 0;
+        document.getElementById('kodeError').textContent = 'Terlalu banyak percobaan. Coba lagi dalam 60 detik.';
+      } else {
+        const sisa = 5 - _kodeAttempts.count;
+        document.getElementById('kodeError').textContent = 'Kode tidak ditemukan. Sisa percobaan: '+sisa+'x';
+      }
+      document.getElementById('kodeError').style.display='block';
+      return;
+    }
+    // Reset counter on success
+    _kodeAttempts.count = 0;
+    _kodeAttempts.lockedUntil = 0;
     const entries=snap.val(), blokId=Object.keys(entries)[0];
     const blok=entries[blokId]; blok.id=blokId;
     localStorage.setItem('farmer_blok_id',blokId);
@@ -1307,22 +1339,54 @@ async function simpanEdit(){
 
 // ── FOTO ──────────────────────────────────────────────
 function compressImage(file,maxW,maxH,q){
-  return new Promise(res=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const img=new Image();
-      img.onload=()=>{
-        const canvas=document.createElement('canvas');
-        let w=img.width, h=img.height;
-        if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
-        if(h>maxH){ w=Math.round(w*maxH/h); h=maxH; }
-        canvas.width=w; canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        res(canvas.toDataURL('image/jpeg',q));
+  return new Promise((res,rej)=>{
+    // ── SECURITY: Validate file type ──────────────────
+    // 1. Check MIME type (can be spoofed but first line of defense)
+    const allowedTypes = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/heic','image/heif'];
+    if(!allowedTypes.includes(file.type.toLowerCase())){
+      rej(new Error('File bukan gambar yang valid. Hanya JPG, PNG, WebP yang diizinkan.'));
+      return;
+    }
+    // 2. Check file size (max 10MB before compression)
+    if(file.size > 10 * 1024 * 1024){
+      rej(new Error('Ukuran file terlalu besar (maks 10MB).'));
+      return;
+    }
+    // 3. Read first bytes to verify magic number (real file signature)
+    const headerReader = new FileReader();
+    headerReader.onload = e => {
+      const arr = new Uint8Array(e.target.result);
+      // Magic bytes: JPEG=FFD8FF, PNG=89504E47, WEBP=52494646, GIF=47494638
+      const isJPEG = arr[0]===0xFF && arr[1]===0xD8 && arr[2]===0xFF;
+      const isPNG  = arr[0]===0x89 && arr[1]===0x50 && arr[2]===0x4E && arr[3]===0x47;
+      const isWEBP = arr[0]===0x52 && arr[1]===0x49 && arr[2]===0x46 && arr[3]===0x46;
+      const isGIF  = arr[0]===0x47 && arr[1]===0x49 && arr[2]===0x46;
+      const isHEIC = arr[4]===0x66 && arr[5]===0x74 && arr[6]===0x79 && arr[7]===0x70; // ftyp box
+      if(!isJPEG && !isPNG && !isWEBP && !isGIF && !isHEIC){
+        rej(new Error('File tidak dikenali sebagai gambar yang valid.'));
+        return;
+      }
+      // ── File is valid - proceed with compression ──
+      const reader = new FileReader();
+      reader.onload = e2 => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w=img.width, h=img.height;
+          if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+          if(h>maxH){ w=Math.round(w*maxH/h); h=maxH; }
+          canvas.width=w; canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          res(canvas.toDataURL('image/jpeg',q));
+        };
+        img.onerror = () => rej(new Error('Gagal memproses gambar.'));
+        img.src = e2.target.result;
       };
-      img.src=e.target.result;
+      reader.onerror = () => rej(new Error('Gagal membaca file.'));
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
+    headerReader.onerror = () => rej(new Error('Gagal memverifikasi file.'));
+    headerReader.readAsArrayBuffer(file.slice(0,12)); // only read first 12 bytes for magic check
   });
 }
 async function uploadFoto(key,ownerId,file,onProgress){
