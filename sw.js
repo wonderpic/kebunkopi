@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kopiplanpro-v3';
+const CACHE_NAME = 'kopiplanpro-v5';
 
 // Only cache static assets - NOT index.html
 // index.html must always be fresh to ensure correct auth state
