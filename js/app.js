@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 // ── FIREBASE ──────────────────────────────────────────
-const firebaseConfig = {
+var firebaseConfig = {
   apiKey: "AIzaSyBgnaxTGuZrghX95cDEWqP-oJkDHVYbEp4",
   authDomain: "kopiplanpro.firebaseapp.com",
   databaseURL: "https://kopiplanpro-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -12,9 +12,9 @@ const firebaseConfig = {
   messagingSenderId: "365158367888",
   appId: "1:365158367888:web:2c6f27819fdf8b87330e15"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.database();
+if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
+var auth = firebase.auth();
+var db   = firebase.database();
 
 // ── ASSETS ────────────────────────────────────────────
 const LOGO_SRC = './assets/logo.png';
